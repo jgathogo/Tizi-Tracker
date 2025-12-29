@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Tizi Log - Development Server Runner
+# Tizi Tracker - Development Server Runner
 # This script helps you start the development server
 
 set -e  # Exit on error
 
-echo "🏋️  Tizi Log - Starting Development Server"
+echo "🏋️  Tizi Tracker - Starting Development Server"
 echo "=========================================="
 echo ""
 

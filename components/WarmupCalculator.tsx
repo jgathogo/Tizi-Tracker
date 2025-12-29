@@ -1,5 +1,5 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Check } from 'lucide-react';
 
 interface WarmupCalculatorProps {
   exerciseName: string;
@@ -9,6 +9,40 @@ interface WarmupCalculatorProps {
 }
 
 export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName, workWeight, unit, onClose }) => {
+  // Store completed warmup sets in localStorage keyed by exercise name and weight
+  const storageKey = `warmup_${exerciseName}_${workWeight}`;
+  
+  const [completedWarmups, setCompletedWarmups] = useState<Set<number>>(new Set());
+
+  // Load completed warmups from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const completed = JSON.parse(saved);
+        setCompletedWarmups(new Set(completed));
+      } catch (e) {
+        console.error('Failed to load warmup state', e);
+      }
+    }
+  }, [storageKey]);
+
+  // Save completed warmups to localStorage
+  const saveCompletedWarmups = (completed: Set<number>) => {
+    localStorage.setItem(storageKey, JSON.stringify(Array.from(completed)));
+  };
+
+  const toggleWarmup = (index: number) => {
+    const newCompleted = new Set(completedWarmups);
+    if (newCompleted.has(index)) {
+      newCompleted.delete(index);
+    } else {
+      newCompleted.add(index);
+    }
+    setCompletedWarmups(newCompleted);
+    saveCompletedWarmups(newCompleted);
+  };
+
   // Simple logic: Empty bar, then jumps to work weight
   const barWeight = unit === 'kg' ? 20 : 45;
   
@@ -33,6 +67,8 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
 
   const warmups = generateSets();
 
+  const allCompleted = warmups.length > 0 && completedWarmups.size === warmups.length;
+
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-700">
@@ -50,24 +86,83 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
             {warmups.length === 0 ? (
               <p className="text-center text-slate-400 py-4">No warmup needed (weight is light).</p>
             ) : (
-              warmups.map((set, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-700/50 p-3 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 flex items-center justify-center bg-slate-600 rounded-full text-xs font-bold text-slate-300">{idx + 1}</span>
-                    <span className="font-semibold text-slate-200">{set.reps} reps</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-amber-500">{set.weight}</span>
-                    <span className="text-xs text-slate-400">{unit}</span>
-                  </div>
-                </div>
-              ))
+              warmups.map((set, idx) => {
+                const isCompleted = completedWarmups.has(idx);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => toggleWarmup(idx)}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                      isCompleted
+                        ? 'bg-green-900/30 border-2 border-green-600/50'
+                        : 'bg-slate-700/50 border-2 border-transparent hover:bg-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold transition-all ${
+                        isCompleted
+                          ? 'bg-green-600 text-white'
+                          : 'bg-slate-600 text-slate-300'
+                      }`}>
+                        {isCompleted ? <Check size={16} /> : idx + 1}
+                      </div>
+                      <div className="text-left">
+                        <div className={`font-semibold ${isCompleted ? 'text-green-300 line-through' : 'text-slate-200'}`}>
+                          {set.reps} reps @ {set.label}
+                        </div>
+                        {isCompleted && (
+                          <div className="text-xs text-green-400 mt-0.5">Completed</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xl font-bold ${isCompleted ? 'text-green-400' : 'text-amber-500'}`}>
+                        {set.weight}
+                      </span>
+                      <span className="text-xs text-slate-400">{unit}</span>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
+
+          {warmups.length > 0 && (
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <span className="text-slate-400">
+                Progress: {completedWarmups.size} / {warmups.length} completed
+              </span>
+              {allCompleted && (
+                <span className="text-green-400 font-semibold flex items-center gap-1">
+                  <Check size={16} /> All done!
+                </span>
+              )}
+            </div>
+          )}
           
-          <button onClick={onClose} className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors">
-            Done
-          </button>
+          <div className="flex gap-2 mt-6">
+            <button
+              onClick={() => {
+                // Clear all completed warmups
+                setCompletedWarmups(new Set());
+                localStorage.removeItem(storageKey);
+              }}
+              className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium rounded-xl transition-colors"
+              disabled={completedWarmups.size === 0}
+            >
+              Reset
+            </button>
+            <button
+              onClick={onClose}
+              className={`flex-1 py-3 font-bold rounded-xl transition-colors ${
+                allCompleted
+                  ? 'bg-green-600 hover:bg-green-500 text-white'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white'
+              }`}
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>

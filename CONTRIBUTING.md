@@ -1,6 +1,6 @@
-# Contributing to Tizi Log
+# Contributing to Tizi Tracker
 
-Thank you for your interest in contributing to Tizi Log! 🏋️
+Thank you for your interest in contributing to Tizi Tracker! 🏋️
 
 ## How to Report Issues
 
