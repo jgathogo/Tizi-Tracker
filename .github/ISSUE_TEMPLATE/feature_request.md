@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Tizi Log
+about: Suggest an idea for Tizi Tracker
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''

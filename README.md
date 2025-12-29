@@ -1,6 +1,6 @@
-# Tizi Log
+# Tizi Tracker
 
-A versatile and modern fitness tracker designed for all types of activities. Whether you are following a strict 5x5 strength program, going for a run, skipping, or doing a custom workout, Tizi Log helps you capture every session with ease.
+A versatile and modern fitness tracker designed for all types of activities. Whether you are following a strict 5x5 strength program, going for a run, skipping, or doing a custom workout, Tizi Tracker helps you capture every session with ease.
 
 ## Key Modules
 
@@ -21,7 +21,7 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 
 ## Data Persistence
 
-**Your data is automatically saved!** Tizi Log uses browser localStorage to remember:
+**Your data is automatically saved!** Tizi Tracker uses browser localStorage to remember:
 
 - ✅ All workout history
 - ✅ Current weights for each exercise
@@ -72,7 +72,7 @@ Need to debug the app on your phone or share issues with developers?
 
 ## Contributing
 
-Found a bug? Have a feature idea? Want to help improve Tizi Log?
+Found a bug? Have a feature idea? Want to help improve Tizi Tracker?
 
 - 📋 [Report Issues](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues)
 - 💡 [Suggest Enhancements](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/new)
@@ -82,7 +82,7 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 
 ## Re-creating This App (AI Prompt)
 
-> "Build a React-based fitness logger called 'Tizi Log'. The app should be a versatile activity tracker with a specialized module for 5x5 lifting programs. 
+> "Build a React-based fitness logger called 'Tizi Tracker'. The app should be a versatile activity tracker with a specialized module for 5x5 lifting programs. 
 > 
 > **Dashboard:** Features a 'Quick Start' for the next 5x5 session and an 'Activity Hub' for custom logging (e.g., Skipping, Running).
 > **Workout View:** Interactive exercise cards with set trackers. For 5x5 lifts, include a warmup calculator and AI form guide (Gemini API). For custom logs, allow adding new exercises dynamically.

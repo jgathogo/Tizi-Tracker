@@ -1,6 +1,6 @@
 ---
 name: Question
-about: Ask a question about Tizi Log
+about: Ask a question about Tizi Tracker
 title: '[QUESTION] '
 labels: question
 assignees: ''

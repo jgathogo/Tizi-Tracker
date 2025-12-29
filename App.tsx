@@ -13,7 +13,7 @@ import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, 
 
 // --- CONFIGURATION ---
 // Change this variable to rename the app throughout the UI.
-const APP_NAME = "Tizi Log";
+const APP_NAME = "Tizi Tracker";
 
 const INITIAL_STATE: UserProfile = {
   currentWeights: {
@@ -52,28 +52,28 @@ export default function App() {
       try {
         const loaded = JSON.parse(saved);
         setUser(loaded);
-        console.log('✅ Tizi Log: Data loaded successfully', {
+        console.log('✅ Tizi Tracker: Data loaded successfully', {
           historyCount: loaded.history?.length || 0,
           nextWorkout: loaded.nextWorkout,
           exercises: Object.keys(loaded.currentWeights || {})
         });
       } catch (e) {
-        console.error("❌ Tizi Log: Failed to load data", e);
+        console.error("❌ Tizi Tracker: Failed to load data", e);
       }
     } else {
-      console.log('ℹ️ Tizi Log: Starting fresh - no saved data');
+      console.log('ℹ️ Tizi Tracker: Starting fresh - no saved data');
     }
   }, []);
 
   useEffect(() => {
     try {
       localStorage.setItem('powerlifts_data', JSON.stringify(user));
-      console.log('💾 Tizi Log: Data saved', {
+      console.log('💾 Tizi Tracker: Data saved', {
         historyCount: user.history.length,
         nextWorkout: user.nextWorkout
       });
     } catch (e) {
-      console.error("❌ Tizi Log: Failed to save data", e);
+      console.error("❌ Tizi Tracker: Failed to save data", e);
     }
   }, [user]);
 
@@ -87,7 +87,7 @@ export default function App() {
           weight: user.currentWeights[name] || 0,
           sets: name === 'Deadlift' ? [null] : [null, null, null, null, null]
         }));
-        console.log(`🏋️ Tizi Log: Started Workout ${type}`, {
+        console.log(`🏋️ Tizi Tracker: Started Workout ${type}`, {
           exercises: exercises.map(e => `${e.name} @ ${e.weight}${user.unit}`)
         });
     } else {
@@ -99,7 +99,7 @@ export default function App() {
             sets: [null],
             isCustom: true
         }];
-        console.log(`🏃 Tizi Log: Started Custom Activity: ${customName}`);
+        console.log(`🏃 Tizi Tracker: Started Custom Activity: ${customName}`);
     }
 
     const newSession: WorkoutSessionData = {
@@ -163,7 +163,7 @@ export default function App() {
             if (allSetsDone) {
                 const increment = ex.name === 'Deadlift' ? 5 : 2.5; 
                 nextWeight += increment;
-                console.log(`📈 Tizi Log: ${ex.name} progressed to ${nextWeight}${user.unit}`);
+                console.log(`📈 Tizi Tracker: ${ex.name} progressed to ${nextWeight}${user.unit}`);
             }
             newWeights[ex.name] = nextWeight;
         });
@@ -177,7 +177,7 @@ export default function App() {
 
     const nextWorkout = activeSession.type === 'A' ? 'B' : activeSession.type === 'B' ? 'A' : user.nextWorkout;
 
-    console.log('✅ Tizi Log: Workout completed', {
+    console.log('✅ Tizi Tracker: Workout completed', {
       type: activeSession.type,
       exercises: completedExercises.length,
       nextWorkout,

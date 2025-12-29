@@ -1,6 +1,6 @@
 # Remote Debugging & Monitoring Guide
 
-This guide helps you debug and monitor Tizi Log on your phone so you can share issues with developers.
+This guide helps you debug and monitor Tizi Tracker on your phone so you can share issues with developers.
 
 ## Option 1: Chrome Remote Debugging (Android) - Recommended
 
@@ -41,7 +41,7 @@ This guide helps you debug and monitor Tizi Log on your phone so you can share i
 2. **Connect iPhone to Mac via USB**
 
 3. **On Mac, open Safari:**
-   - Safari → Develop → [Your iPhone] → [Tizi Log URL]
+   - Safari → Develop → [Your iPhone] → [Tizi Tracker URL]
 
 4. **Web Inspector opens** - Same features as Chrome DevTools
 

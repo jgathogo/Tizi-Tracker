@@ -1,6 +1,6 @@
-# Deploying Tizi Log to Your Phone
+# Deploying Tizi Tracker to Your Phone
 
-This guide covers multiple ways to access Tizi Log on your mobile device.
+This guide covers multiple ways to access Tizi Tracker on your mobile device.
 
 ## Option 1: Deploy to Vercel/Netlify (Recommended - Free & Easy)
 
