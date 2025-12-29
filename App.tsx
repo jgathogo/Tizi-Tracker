@@ -11,6 +11,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle } from 'lucide-react';
 
 // --- CONFIGURATION ---
+// Change this variable to rename the app throughout the UI.
 const APP_NAME = "Tizi Log";
 
 const INITIAL_STATE: UserProfile = {
@@ -70,7 +71,7 @@ export default function App() {
         }));
     } else {
         // Custom generic log
-        customName = prompt("Enter activity name (e.g. Skipping, Running):") || "General Activity";
+        customName = window.prompt("Enter activity name (e.g. Skipping, Running):") || "General Activity";
         exercises = [{
             name: customName,
             weight: 0,
@@ -94,7 +95,7 @@ export default function App() {
 
   const addExerciseToActive = () => {
     if (!activeSession) return;
-    const name = prompt("Exercise Name:");
+    const name = window.prompt("Exercise Name:");
     if (!name) return;
     const newEx: ExerciseSession = {
         name,
@@ -164,7 +165,7 @@ export default function App() {
   };
 
   const cancelWorkout = () => {
-      if(confirm("Are you sure? This session won't be saved.")) {
+      if (window.confirm("Are you sure? This session won't be saved.")) {
           setActiveSession(null);
       }
   };
@@ -243,7 +244,12 @@ export default function App() {
                      </h2>
                      <div className="text-slate-400 text-sm">{new Date(activeSession.startTime).toLocaleTimeString()}</div>
                  </div>
-                 <button onClick={cancelWorkout} className="text-red-400 hover:text-red-300 text-sm font-bold px-3 py-1 bg-red-900/10 rounded-lg">Cancel</button>
+                 <button 
+                    onClick={cancelWorkout} 
+                    className="text-red-400 hover:text-red-300 text-sm font-bold px-4 py-2 bg-red-900/20 hover:bg-red-900/40 rounded-xl border border-red-900/30 transition-all"
+                  >
+                    Cancel
+                  </button>
              </div>
 
              <div className="space-y-4">

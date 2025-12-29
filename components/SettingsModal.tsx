@@ -20,7 +20,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(user, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `powerlifts_backup_${new Date().toISOString().split('T')[0]}.json`);
+    const date = new Date().toISOString().split('T')[0];
+    downloadAnchorNode.setAttribute("download", `tizilog_backup_${date}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -119,7 +120,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
              </h4>
              <button 
                 onClick={() => {
-                    if(confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {
+                    if(window.confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {
                         onReset();
                         onClose();
                     }

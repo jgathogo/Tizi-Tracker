@@ -27,9 +27,9 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
   if (!isOpen) return null;
 
   // Determine increments based on unit
-  // kg: 1.25 (micro), 2.5 (small), 5 (medium)
-  // lb: 2.5 (micro), 5 (small), 10 (medium)
-  const increments = unit === 'kg' ? [1.25, 2.5, 5] : [2.5, 5, 10];
+  const baseIncrements = unit === 'kg' ? [1.25, 2.5, 5] : [2.5, 5, 10];
+  // Sort descending for display: [5, 2.5, 1.25]
+  const sortedIncrements = [...baseIncrements].sort((a, b) => b - a);
 
   const handleIncrement = (amount: number) => {
     setWeight(prev => {
@@ -66,7 +66,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
           <div className="space-y-3 mb-6">
             {/* Decrement Row */}
             <div className="grid grid-cols-3 gap-2">
-              {increments.reverse().map((inc) => (
+              {sortedIncrements.map((inc) => (
                 <button
                   key={`-${inc}`}
                   onClick={() => handleIncrement(-inc)}
@@ -79,7 +79,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
 
             {/* Increment Row */}
             <div className="grid grid-cols-3 gap-2">
-              {increments.reverse().map((inc) => (
+              {sortedIncrements.map((inc) => (
                 <button
                   key={`+${inc}`}
                   onClick={() => handleIncrement(inc)}
