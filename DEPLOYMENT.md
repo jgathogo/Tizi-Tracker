@@ -11,13 +11,14 @@ This guide covers multiple ways to access Tizi Log on your mobile device.
    npm run build
    ```
 
-2. **Install Vercel CLI:**
+2. **Deploy using npx (no installation needed):**
    ```bash
-   npm i -g vercel
+   npx vercel
    ```
-
-3. **Deploy:**
+   
+   **Alternative:** If you prefer to install globally:
    ```bash
+   npm i -g vercel  # May require sudo on Linux
    vercel
    ```
    Follow the prompts. Your app will be live at `https://your-app.vercel.app`
