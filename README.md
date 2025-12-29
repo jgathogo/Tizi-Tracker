@@ -19,6 +19,67 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 - Recharts Visualization
 - Google GenAI (Gemini API)
 
+## Data Persistence
+
+**Your data is automatically saved!** Tizi Log uses browser localStorage to remember:
+
+- ✅ All workout history
+- ✅ Current weights for each exercise
+- ✅ Next workout (A or B alternation)
+- ✅ Your preferences (units, etc.)
+
+**The app remembers:**
+- **Yesterday's workout** - See what you did last time on the dashboard
+- **Tomorrow's plan** - The dashboard shows what exercises and weights are coming up next
+- **Full history** - View all past workouts in the History tab
+- **Progress trends** - Visual charts show your strength progression over time
+
+**Backup your data:**
+- Settings → Export Data (downloads JSON file)
+- Settings → Import Data (restore from backup)
+
+## Getting Started
+
+### Installation
+
+```bash
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Start development server
+npm run dev
+```
+
+Visit `http://localhost:3000` in your browser.
+
+### Deploy to Your Phone
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions on:
+- Deploying to Vercel/Netlify (free hosting)
+- Setting up GitHub Pages
+- Accessing via local network
+- Self-hosting options
+
+## Debugging & Monitoring
+
+Need to debug the app on your phone or share issues with developers?
+
+- 🔍 [Remote Debugging Guide](./REMOTE_DEBUGGING.md) - Connect your phone for debugging
+- 📱 Chrome Remote Debugging (Android)
+- 🍎 Safari Web Inspector (iOS)
+- 🌐 ngrok for sharing your local dev server
+- 📊 Enhanced console logging for easier troubleshooting
+
+## Contributing
+
+Found a bug? Have a feature idea? Want to help improve Tizi Log?
+
+- 📋 [Report Issues](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues)
+- 💡 [Suggest Enhancements](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/new)
+- 📖 [Contributing Guide](./CONTRIBUTING.md)
+
+We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
 ## Re-creating This App (AI Prompt)
 
 > "Build a React-based fitness logger called 'Tizi Log'. The app should be a versatile activity tracker with a specialized module for 5x5 lifting programs. 

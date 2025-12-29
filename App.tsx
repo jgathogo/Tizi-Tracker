@@ -8,6 +8,7 @@ import { Progress } from './components/Progress';
 import { WarmupCalculator } from './components/WarmupCalculator';
 import { WeightAdjustmentModal } from './components/WeightAdjustmentModal';
 import { SettingsModal } from './components/SettingsModal';
+import { AddExerciseModal } from './components/AddExerciseModal';
 import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle } from 'lucide-react';
 
 // --- CONFIGURATION ---
@@ -43,20 +44,37 @@ export default function App() {
   const [guideModal, setGuideModal] = useState<{name: string, data: FormGuideData | null, loading: boolean} | null>(null);
   const [weightModal, setWeightModal] = useState<{index: number, name: string, weight: number} | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('powerlifts_data');
     if (saved) {
       try {
-        setUser(JSON.parse(saved));
+        const loaded = JSON.parse(saved);
+        setUser(loaded);
+        console.log('✅ Tizi Log: Data loaded successfully', {
+          historyCount: loaded.history?.length || 0,
+          nextWorkout: loaded.nextWorkout,
+          exercises: Object.keys(loaded.currentWeights || {})
+        });
       } catch (e) {
-        console.error("Failed to load data", e);
+        console.error("❌ Tizi Log: Failed to load data", e);
       }
+    } else {
+      console.log('ℹ️ Tizi Log: Starting fresh - no saved data');
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('powerlifts_data', JSON.stringify(user));
+    try {
+      localStorage.setItem('powerlifts_data', JSON.stringify(user));
+      console.log('💾 Tizi Log: Data saved', {
+        historyCount: user.history.length,
+        nextWorkout: user.nextWorkout
+      });
+    } catch (e) {
+      console.error("❌ Tizi Log: Failed to save data", e);
+    }
   }, [user]);
 
   const startWorkout = (type: WorkoutType) => {
@@ -69,6 +87,9 @@ export default function App() {
           weight: user.currentWeights[name] || 0,
           sets: name === 'Deadlift' ? [null] : [null, null, null, null, null]
         }));
+        console.log(`🏋️ Tizi Log: Started Workout ${type}`, {
+          exercises: exercises.map(e => `${e.name} @ ${e.weight}${user.unit}`)
+        });
     } else {
         // Custom generic log
         customName = window.prompt("Enter activity name (e.g. Skipping, Running):") || "General Activity";
@@ -78,6 +99,7 @@ export default function App() {
             sets: [null],
             isCustom: true
         }];
+        console.log(`🏃 Tizi Log: Started Custom Activity: ${customName}`);
     }
 
     const newSession: WorkoutSessionData = {
@@ -93,10 +115,8 @@ export default function App() {
     setActiveSession(newSession);
   };
 
-  const addExerciseToActive = () => {
+  const addExerciseToActive = (name: string) => {
     if (!activeSession) return;
-    const name = window.prompt("Exercise Name:");
-    if (!name) return;
     const newEx: ExerciseSession = {
         name,
         weight: 0,
@@ -143,6 +163,7 @@ export default function App() {
             if (allSetsDone) {
                 const increment = ex.name === 'Deadlift' ? 5 : 2.5; 
                 nextWeight += increment;
+                console.log(`📈 Tizi Log: ${ex.name} progressed to ${nextWeight}${user.unit}`);
             }
             newWeights[ex.name] = nextWeight;
         });
@@ -154,11 +175,22 @@ export default function App() {
         completed: true
     };
 
+    const nextWorkout = activeSession.type === 'A' ? 'B' : activeSession.type === 'B' ? 'A' : user.nextWorkout;
+
+    console.log('✅ Tizi Log: Workout completed', {
+      type: activeSession.type,
+      exercises: completedExercises.length,
+      nextWorkout,
+      duration: completedSession.endTime && activeSession.startTime 
+        ? Math.round((completedSession.endTime - activeSession.startTime) / 1000 / 60) + ' minutes'
+        : 'N/A'
+    });
+
     setUser(prev => ({
         ...prev,
         currentWeights: newWeights,
         history: [completedSession, ...prev.history],
-        nextWorkout: activeSession.type === 'A' ? 'B' : activeSession.type === 'B' ? 'A' : prev.nextWorkout
+        nextWorkout
     }));
 
     setActiveSession(null);
@@ -176,7 +208,20 @@ export default function App() {
       setGuideModal({ name, data, loading: false });
   };
 
-  const renderDashboard = () => (
+  const renderDashboard = () => {
+    // Get yesterday's workout (most recent completed)
+    const yesterdayWorkout = user.history
+      .filter(w => w.completed)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    
+    // Get exercises for next workout
+    const nextExercises = PROGRAMS[user.nextWorkout] || [];
+    const nextWorkoutPreview = nextExercises.map(name => ({
+      name,
+      weight: user.currentWeights[name] || 0
+    }));
+
+    return (
     <div className="flex flex-col h-full max-w-2xl mx-auto p-4 pt-8">
        <header className="mb-8 flex justify-between items-start">
            <div>
@@ -191,13 +236,49 @@ export default function App() {
            </button>
        </header>
 
+       {/* Yesterday's Workout Card */}
+       {yesterdayWorkout && (
+         <div className="bg-slate-800 rounded-2xl p-5 border border-slate-700 mb-4">
+           <div className="flex items-center gap-2 mb-3">
+             <HistoryIcon size={16} className="text-slate-400" />
+             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Yesterday</h3>
+           </div>
+           <div className="flex items-center justify-between mb-2">
+             <span className="text-lg font-bold text-white">
+               {yesterdayWorkout.customName || `Workout ${yesterdayWorkout.type}`}
+             </span>
+             <span className="text-xs text-slate-400">
+               {new Date(yesterdayWorkout.date).toLocaleDateString()}
+             </span>
+           </div>
+           <div className="flex flex-wrap gap-2 mt-3">
+             {yesterdayWorkout.exercises.slice(0, 3).map((ex, idx) => (
+               <span key={idx} className="text-sm text-slate-300 bg-slate-700/50 px-3 py-1 rounded-lg">
+                 {ex.name} {ex.weight}{user.unit}
+               </span>
+             ))}
+             {yesterdayWorkout.exercises.length > 3 && (
+               <span className="text-sm text-slate-500">+{yesterdayWorkout.exercises.length - 3} more</span>
+             )}
+           </div>
+         </div>
+       )}
+
        {/* Quick Start Card */}
-       <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 text-white shadow-2xl border border-blue-500/30 relative overflow-hidden group mb-8">
+       <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 text-white shadow-2xl border border-blue-500/30 relative overflow-hidden group mb-4">
            <div className="relative z-10">
                <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
                    NEXT 5X5 SESSION
                </div>
                <h2 className="text-3xl font-bold mb-4">Workout {user.nextWorkout}</h2>
+               <div className="mb-4 space-y-1">
+                 {nextWorkoutPreview.map((ex, idx) => (
+                   <div key={idx} className="text-blue-100 text-sm flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                     {ex.name} - {ex.weight}{user.unit}
+                   </div>
+                 ))}
+               </div>
                <button 
                 onClick={() => startWorkout(user.nextWorkout)}
                 className="bg-white text-blue-900 px-6 py-3 rounded-xl font-bold text-md flex items-center gap-2 hover:bg-blue-50 transition-colors shadow-lg"
@@ -231,7 +312,8 @@ export default function App() {
            </div>
        </div>
     </div>
-  );
+    );
+  };
 
   const renderActiveSession = () => {
       if (!activeSession) return null;
@@ -266,7 +348,7 @@ export default function App() {
                 ))}
                 
                 <button 
-                    onClick={addExerciseToActive}
+                    onClick={() => setAddExerciseModalOpen(true)}
                     className="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-all flex items-center justify-center gap-2"
                 >
                     <PlusCircle size={20} /> Add Exercise
@@ -379,6 +461,12 @@ export default function App() {
         user={user}
         onImport={(data) => setUser(data)}
         onReset={() => setUser(INITIAL_STATE)}
+      />
+      
+      <AddExerciseModal
+        isOpen={addExerciseModalOpen}
+        onClose={() => setAddExerciseModalOpen(false)}
+        onAdd={addExerciseToActive}
       />
 
       {guideModal && (
