@@ -8,6 +8,8 @@ interface ExerciseCardProps {
   onOpenGuide: (name: string) => void;
   onOpenWarmup: (name: string, weight: number) => void;
   onEditWeight: (name: string, currentWeight: number) => void;
+  onEditAttempt?: (exerciseIndex: number, attempt: number) => void;
+  exerciseIndex?: number;
   unit: string;
 }
 
@@ -17,6 +19,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onOpenGuide, 
   onOpenWarmup, 
   onEditWeight,
+  onEditAttempt,
+  exerciseIndex,
   unit 
 }) => {
   const getCircleColor = (reps: number | null) => {
@@ -30,7 +34,33 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     <div className="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-lg border border-slate-700 mb-4">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white mb-1">{exercise.name}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-xl font-bold text-white">{exercise.name}</h3>
+            {onEditAttempt !== undefined && exerciseIndex !== undefined ? (
+              <button
+                onClick={() => {
+                  const currentAttempt = exercise.attempt || 1;
+                  const newAttempt = prompt(`Enter attempt number for ${exercise.name}:`, currentAttempt.toString());
+                  if (newAttempt !== null) {
+                    const attemptNum = parseInt(newAttempt, 10);
+                    if (!isNaN(attemptNum) && attemptNum > 0) {
+                      onEditAttempt(exerciseIndex, attemptNum);
+                    }
+                  }
+                }}
+                className="text-xs font-bold text-slate-300 bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded-full transition-colors cursor-pointer"
+                title="Click to edit attempt number"
+              >
+                ({exercise.attempt || 1})
+              </button>
+            ) : (
+              exercise.attempt && exercise.attempt > 0 && (
+                <span className="text-xs font-bold text-slate-400 bg-slate-700/50 px-2 py-1 rounded-full">
+                  ({exercise.attempt})
+                </span>
+              )
+            )}
+          </div>
           <button 
             onClick={() => onEditWeight(exercise.name, exercise.weight)}
             className="group flex items-center gap-2 hover:bg-slate-700/50 p-2 -ml-2 rounded-lg transition-all"

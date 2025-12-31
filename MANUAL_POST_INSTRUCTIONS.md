@@ -22,7 +22,7 @@
 ## Option 2: Manual Post (If CLI doesn't work)
 
 1. **Go to the issue:**
-   https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/1
+   https://github.com/jgathogo/Tizi-Tracker/issues/1
 
 2. **Copy the comment content:**
    - Open `GITHUB_COMMENT.md` in this repository

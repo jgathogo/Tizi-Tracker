@@ -9,6 +9,8 @@ import { WarmupCalculator } from './components/WarmupCalculator';
 import { WeightAdjustmentModal } from './components/WeightAdjustmentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
+import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
+import { Logo } from './components/Logo';
 import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle } from 'lucide-react';
 
 // --- CONFIGURATION ---
@@ -25,7 +27,14 @@ const INITIAL_STATE: UserProfile = {
   },
   nextWorkout: 'A',
   history: [],
-  unit: 'kg'
+  unit: 'kg',
+  schedule: {
+    frequency: 3,
+    preferredDays: [1, 3, 5], // Monday, Wednesday, Friday
+    flexible: true
+  },
+  exerciseAttempts: {}, // Track attempt number per exercise at current weight
+  repeatCount: 2 // Repeat each exercise 2 times at a weight before progressing
 };
 
 const PROGRAMS = {
@@ -45,13 +54,20 @@ export default function App() {
   const [weightModal, setWeightModal] = useState<{index: number, name: string, weight: number} | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [completedWorkout, setCompletedWorkout] = useState<{workout: WorkoutSessionData, nextWorkout: 'A' | 'B'} | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('powerlifts_data');
+    // Try new key first, fallback to old key for migration
+    const saved = localStorage.getItem('tizi_tracker_data') || localStorage.getItem('powerlifts_data');
     if (saved) {
       try {
         const loaded = JSON.parse(saved);
         setUser(loaded);
+        // Migrate to new key if using old key
+        if (localStorage.getItem('powerlifts_data') && !localStorage.getItem('tizi_tracker_data')) {
+          localStorage.setItem('tizi_tracker_data', saved);
+          localStorage.removeItem('powerlifts_data');
+        }
         console.log('✅ Tizi Tracker: Data loaded successfully', {
           historyCount: loaded.history?.length || 0,
           nextWorkout: loaded.nextWorkout,
@@ -67,7 +83,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('powerlifts_data', JSON.stringify(user));
+      localStorage.setItem('tizi_tracker_data', JSON.stringify(user));
       console.log('💾 Tizi Tracker: Data saved', {
         historyCount: user.history.length,
         nextWorkout: user.nextWorkout
@@ -82,11 +98,16 @@ export default function App() {
     let customName = "";
 
     if (type === 'A' || type === 'B') {
-        exercises = PROGRAMS[type].map(name => ({
-          name,
-          weight: user.currentWeights[name] || 0,
-          sets: name === 'Deadlift' ? [null] : [null, null, null, null, null]
-        }));
+        exercises = PROGRAMS[type].map(name => {
+          const currentWeight = user.currentWeights[name] || 0;
+          const attempt = user.exerciseAttempts?.[name] || 1;
+          return {
+            name,
+            weight: currentWeight,
+            sets: name === 'Deadlift' ? [null] : [null, null, null, null, null],
+            attempt
+          };
+        });
         console.log(`🏋️ Tizi Tracker: Started Workout ${type}`, {
           exercises: exercises.map(e => `${e.name} @ ${e.weight}${user.unit}`)
         });
@@ -144,28 +165,83 @@ export default function App() {
   const updateExerciseWeight = (newWeight: number) => {
       if (!activeSession || !weightModal) return;
       const updatedExercises = [...activeSession.exercises];
+      const exercise = updatedExercises[weightModal.index];
+      const oldWeight = exercise.weight;
       updatedExercises[weightModal.index].weight = newWeight;
+      
+      // If weight changed, reset attempt counter to 1
+      if (newWeight !== oldWeight) {
+        updatedExercises[weightModal.index].attempt = 1;
+        // Also update user's exerciseAttempts if this is a standard exercise
+        if (activeSession.type === 'A' || activeSession.type === 'B') {
+          setUser(prev => ({
+            ...prev,
+            exerciseAttempts: {
+              ...(prev.exerciseAttempts || {}),
+              [exercise.name]: 1
+            }
+          }));
+        }
+      }
+      
       setActiveSession({ ...activeSession, exercises: updatedExercises });
       setWeightModal(null);
+  };
+
+  const updateExerciseAttempt = (exerciseIndex: number, attempt: number) => {
+      if (!activeSession) return;
+      const updatedExercises = [...activeSession.exercises];
+      updatedExercises[exerciseIndex].attempt = attempt;
+      setActiveSession({ ...activeSession, exercises: updatedExercises });
+      
+      // Also update user's exerciseAttempts if this is a standard exercise
+      if (activeSession.type === 'A' || activeSession.type === 'B') {
+        const exercise = updatedExercises[exerciseIndex];
+        setUser(prev => ({
+          ...prev,
+          exerciseAttempts: {
+            ...(prev.exerciseAttempts || {}),
+            [exercise.name]: attempt
+          }
+        }));
+      }
   };
 
   const finishWorkout = () => {
     if (!activeSession) return;
 
     const newWeights = { ...user.currentWeights };
+    const newAttempts = { ...(user.exerciseAttempts || {}) };
+    const repeatCount = user.repeatCount || 2;
     const completedExercises = activeSession.exercises;
 
     // Only progress if it was a standard 5x5 workout
     if (activeSession.type === 'A' || activeSession.type === 'B') {
         completedExercises.forEach(ex => {
-            let nextWeight = ex.weight;
+            const currentWeight = ex.weight;
+            const currentAttempt = ex.attempt || 1;
             const allSetsDone = ex.sets.every(r => r === 5);
+            
             if (allSetsDone) {
-                const increment = ex.name === 'Deadlift' ? 5 : 2.5; 
-                nextWeight += increment;
-                console.log(`📈 Tizi Tracker: ${ex.name} progressed to ${nextWeight}${user.unit}`);
+                // Check if we've completed the required number of attempts
+                if (currentAttempt >= repeatCount) {
+                    // Progress to next weight and reset attempt counter
+                    const increment = ex.name === 'Deadlift' ? 5 : 2.5; 
+                    const nextWeight = currentWeight + increment;
+                    newWeights[ex.name] = nextWeight;
+                    newAttempts[ex.name] = 1; // Reset to 1st attempt at new weight
+                    console.log(`📈 Tizi Tracker: ${ex.name} progressed to ${nextWeight}${user.unit} (attempt 1)`);
+                } else {
+                    // Same weight, increment attempt counter
+                    newWeights[ex.name] = currentWeight;
+                    newAttempts[ex.name] = currentAttempt + 1;
+                    console.log(`🔄 Tizi Tracker: ${ex.name} at ${currentWeight}${user.unit} (attempt ${currentAttempt + 1}/${repeatCount})`);
+                }
+            } else {
+                // Sets not all completed, keep same weight and attempt
+                newWeights[ex.name] = currentWeight;
+                newAttempts[ex.name] = currentAttempt;
             }
-            newWeights[ex.name] = nextWeight;
         });
     }
 
@@ -186,13 +262,19 @@ export default function App() {
         : 'N/A'
     });
 
+    // Save the workout to history
     setUser(prev => ({
         ...prev,
         currentWeights: newWeights,
+        exerciseAttempts: newAttempts,
         history: [completedSession, ...prev.history],
         nextWorkout
     }));
 
+    // Show completion modal
+    setCompletedWorkout({ workout: completedSession, nextWorkout });
+    
+    // Clear active session
     setActiveSession(null);
   };
 
@@ -224,9 +306,12 @@ export default function App() {
     return (
     <div className="flex flex-col h-full max-w-2xl mx-auto p-4 pt-8">
        <header className="mb-8 flex justify-between items-start">
-           <div>
-               <h1 className="text-3xl font-bold text-white mb-2">{APP_NAME}</h1>
-               <p className="text-slate-400">Log your progress, whatever the activity.</p>
+           <div className="flex items-center gap-3">
+               <Logo size={48} className="flex-shrink-0" />
+               <div>
+                   <h1 className="text-3xl font-bold text-white mb-2">{APP_NAME}</h1>
+                   <p className="text-slate-400">Log your progress, whatever the activity.</p>
+               </div>
            </div>
            <button 
              onClick={() => setSettingsOpen(true)}
@@ -340,10 +425,12 @@ export default function App() {
                         key={exIdx} 
                         exercise={ex} 
                         unit={user.unit}
+                        exerciseIndex={exIdx}
                         onSetUpdate={(setIdx, reps) => updateSet(exIdx, setIdx, reps)}
                         onOpenGuide={fetchGuide}
                         onOpenWarmup={(name, weight) => setWarmupModal({name, weight})}
                         onEditWeight={(name, weight) => setWeightModal({index: exIdx, name, weight})}
+                        onEditAttempt={updateExerciseAttempt}
                     />
                 ))}
                 
@@ -461,6 +548,7 @@ export default function App() {
         user={user}
         onImport={(data) => setUser(data)}
         onReset={() => setUser(INITIAL_STATE)}
+        onUpdate={(data) => setUser(data)}
       />
       
       <AddExerciseModal
@@ -468,6 +556,17 @@ export default function App() {
         onClose={() => setAddExerciseModalOpen(false)}
         onAdd={addExerciseToActive}
       />
+
+      {completedWorkout && (
+        <WorkoutCompleteModal
+          isOpen={true}
+          onClose={() => setCompletedWorkout(null)}
+          workout={completedWorkout.workout}
+          nextWorkout={completedWorkout.nextWorkout}
+          unit={user.unit}
+          schedule={user.schedule}
+        />
+      )}
 
       {guideModal && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">

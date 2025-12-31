@@ -74,8 +74,8 @@ Need to debug the app on your phone or share issues with developers?
 
 Found a bug? Have a feature idea? Want to help improve Tizi Tracker?
 
-- 📋 [Report Issues](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues)
-- 💡 [Suggest Enhancements](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/new)
+- 📋 [Report Issues](https://github.com/jgathogo/Tizi-Tracker/issues)
+- 💡 [Suggest Enhancements](https://github.com/jgathogo/Tizi-Tracker/issues/new)
 - 📖 [Contributing Guide](./CONTRIBUTING.md)
 
 We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.

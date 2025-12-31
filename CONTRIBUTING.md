@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Tizi Tracker! 🏋️
 
 ### Creating an Issue
 
-Use the [GitHub Issues](https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues) page and include:
+Use the [GitHub Issues](https://github.com/jgathogo/Tizi-Tracker/issues) page and include:
 
 1. **Clear title** - What's the problem?
 2. **Description** - What happened vs. what you expected
@@ -59,8 +59,8 @@ If you want to contribute code:
 1. **Fork the repository**
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Tizi-Log-Tizi-Tracker.git
-   cd Tizi-Log-Tizi-Tracker
+   git clone https://github.com/YOUR_USERNAME/Tizi-Tracker.git
+   cd Tizi-Tracker
    ```
 
 3. **Install dependencies:**
