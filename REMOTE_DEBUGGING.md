@@ -93,7 +93,7 @@ This guide helps you debug and monitor Tizi Tracker on your phone so you can sha
    npx vercel --prod
    ```
 
-2. **Get public URL** (e.g., `https://tizi-log.vercel.app`)
+2. **Get public URL** (e.g., `https://tizi-tracker.vercel.app`)
 
 3. **Share URL** - Developers can:
    - Access the app

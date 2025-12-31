@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle } from 'lucide-react';
-import { UserProfile } from '../types';
+import React, { useRef, useState, useEffect } from 'react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar } from 'lucide-react';
+import { UserProfile, WorkoutSchedule } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,11 +8,44 @@ interface SettingsModalProps {
   user: UserProfile;
   onImport: (data: UserProfile) => void;
   onReset: () => void;
+  onUpdate: (data: UserProfile) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, user, onImport, onReset }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, user, onImport, onReset, onUpdate }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [schedule, setSchedule] = useState<WorkoutSchedule>(
+    user.schedule || { frequency: 3, preferredDays: [1, 3, 5], flexible: true }
+  );
+
+  useEffect(() => {
+    if (user.schedule) {
+      setSchedule(user.schedule);
+    }
+  }, [user.schedule]);
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const toggleDay = (day: number) => {
+    const newDays = schedule.preferredDays.includes(day)
+      ? schedule.preferredDays.filter(d => d !== day)
+      : [...schedule.preferredDays, day].sort();
+    const newSchedule = { ...schedule, preferredDays: newDays };
+    setSchedule(newSchedule);
+    onUpdate({ ...user, schedule: newSchedule });
+  };
+
+  const updateFrequency = (freq: number) => {
+    const newSchedule = { ...schedule, frequency: freq };
+    setSchedule(newSchedule);
+    onUpdate({ ...user, schedule: newSchedule });
+  };
+
+  const toggleFlexible = () => {
+    const newSchedule = { ...schedule, flexible: !schedule.flexible };
+    setSchedule(newSchedule);
+    onUpdate({ ...user, schedule: newSchedule });
+  };
 
   if (!isOpen) return null;
 
@@ -109,6 +142,101 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                 <FileJson size={18} className="text-slate-500" />
             </button>
             {error && <div className="text-red-400 text-xs px-2">{error}</div>}
+          </div>
+
+          <hr className="border-slate-700" />
+
+          {/* Workout Schedule Section */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <Calendar size={14} /> Workout Schedule
+            </h4>
+            
+            {/* Frequency */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Workouts per week</label>
+              <div className="flex gap-2">
+                {[2, 3, 4, 5, 6].map(freq => (
+                  <button
+                    key={freq}
+                    onClick={() => updateFrequency(freq)}
+                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
+                      schedule.frequency === freq
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {freq}x
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preferred Days */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Preferred workout days</label>
+              <div className="grid grid-cols-7 gap-2">
+                {dayNames.map((day, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => toggleDay(idx)}
+                    className={`py-2 rounded-lg text-xs font-semibold transition-all ${
+                      schedule.preferredDays.includes(idx)
+                        ? 'bg-green-600 text-white'
+                        : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Flexible Mode */}
+            <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+              <div>
+                <div className="text-sm font-semibold text-white">Flexible Schedule</div>
+                <div className="text-xs text-slate-400">Allow workouts on any day, not just preferred</div>
+              </div>
+              <button
+                onClick={toggleFlexible}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  schedule.flexible ? 'bg-green-600' : 'bg-slate-600'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    schedule.flexible ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Exercise Repeat Count */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Progression Settings</h4>
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Repeat each exercise at weight before progressing</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map(count => (
+                  <button
+                    key={count}
+                    onClick={() => onUpdate({ ...user, repeatCount: count })}
+                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
+                      (user.repeatCount || 2) === count
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {count}x
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs text-slate-400 mt-1">
+                After completing {user.repeatCount || 2} successful workouts at a weight, the app will automatically increase the weight.
+              </div>
+            </div>
           </div>
 
           <hr className="border-slate-700" />

@@ -13,7 +13,7 @@ if ! gh auth status &>/dev/null; then
     echo "Then run this script again."
     echo ""
     echo "Alternatively, you can manually:"
-    echo "1. Go to: https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/1"
+    echo "1. Go to: https://github.com/jgathogo/Tizi-Tracker/issues/1"
     echo "2. Copy the content from GITHUB_COMMENT.md"
     echo "3. Paste it as a comment"
     echo "4. Close the issue"
@@ -33,7 +33,7 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         echo "✅ Issue closed successfully!"
         echo ""
-        echo "View issue: https://github.com/jgathogo/Tizi-Log-Tizi-Tracker/issues/1"
+        echo "View issue: https://github.com/jgathogo/Tizi-Tracker/issues/1"
     else
         echo "⚠️  Failed to close issue. You may need to close it manually."
     fi

@@ -47,7 +47,14 @@ export const History: React.FC<HistoryProps> = ({ history, unit }) => {
               {workout.exercises.map((ex, idx) => {
                   return (
                       <div key={idx} className="flex justify-between text-sm group">
-                          <span className="text-slate-200 font-medium group-hover:text-blue-400 transition-colors">{ex.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-200 font-medium group-hover:text-blue-400 transition-colors">{ex.name}</span>
+                            {ex.attempt && ex.attempt > 0 && (
+                              <span className="text-xs font-bold text-slate-500 bg-slate-700/30 px-1.5 py-0.5 rounded">
+                                ({ex.attempt})
+                              </span>
+                            )}
+                          </div>
                           <div className="flex gap-4">
                                <span className="font-bold text-slate-400">{ex.weight} {unit}</span>
                                <span className="font-mono text-slate-500">{ex.sets.map(r => r === null ? '-' : r).join('/')}</span>

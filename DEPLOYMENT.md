@@ -50,7 +50,7 @@ This guide covers multiple ways to access Tizi Tracker on your mobile device.
 1. **Update `vite.config.ts`** to add base path:
    ```typescript
    export default defineConfig({
-     base: '/Tizi-Log-Tizi-Tracker/', // Your repo name
+     base: '/Tizi-Tracker/', // Your repo name
      // ... rest of config
    })
    ```
@@ -67,7 +67,7 @@ This guide covers multiple ways to access Tizi Tracker on your mobile device.
 
 4. **Enable GitHub Pages** in repo settings → Pages → Source: `gh-pages` branch
 
-5. **Access at:** `https://yourusername.github.io/Tizi-Log-Tizi-Tracker/`
+5. **Access at:** `https://yourusername.github.io/Tizi-Tracker/`
 
 ## Option 3: Local Network Access (Development)
 
