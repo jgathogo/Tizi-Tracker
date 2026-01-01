@@ -14,7 +14,7 @@ if ! gh auth status &>/dev/null; then
     echo ""
     echo "Alternatively, you can manually:"
     echo "1. Go to: https://github.com/jgathogo/Tizi-Tracker/issues/1"
-    echo "2. Copy the content from GITHUB_COMMENT.md"
+    echo "2. Copy the content from issues/GITHUB_COMMENT.md"
     echo "3. Paste it as a comment"
     echo "4. Close the issue"
     exit 1
@@ -22,7 +22,7 @@ fi
 
 # Post comment
 echo "Posting comment..."
-gh issue comment 1 --body-file GITHUB_COMMENT.md
+gh issue comment 1 --body-file issues/GITHUB_COMMENT.md
 
 if [ $? -eq 0 ]; then
     echo "✅ Comment posted successfully!"
@@ -40,6 +40,6 @@ if [ $? -eq 0 ]; then
 else
     echo "❌ Failed to post comment. Please post manually."
     echo ""
-    echo "Content is in: GITHUB_COMMENT.md"
+    echo "Content is in: issues/GITHUB_COMMENT.md"
 fi
 

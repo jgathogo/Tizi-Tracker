@@ -73,13 +73,30 @@ export default function App() {
           nextWorkout: loaded.nextWorkout,
           exercises: Object.keys(loaded.currentWeights || {})
         });
+        // Prompt for name if missing (new users only)
+        if (!loaded.name && (!loaded.history || loaded.history.length === 0)) {
+          setTimeout(() => {
+            const name = window.prompt("Welcome to Tizi Tracker! What's your name?");
+            if (name && name.trim()) {
+              setUser({ ...loaded, name: name.trim() });
+            }
+          }, 500);
+        }
       } catch (e) {
         console.error("❌ Tizi Tracker: Failed to load data", e);
       }
     } else {
       console.log('ℹ️ Tizi Tracker: Starting fresh - no saved data');
+      // Brand new user - prompt for name
+      setTimeout(() => {
+        const name = window.prompt("Welcome to Tizi Tracker! What's your name?");
+        if (name && name.trim()) {
+          setUser({ ...INITIAL_STATE, name: name.trim() });
+        }
+      }, 500);
     }
   }, []);
+
 
   useEffect(() => {
     try {
@@ -290,9 +307,43 @@ export default function App() {
       setGuideModal({ name, data, loading: false });
   };
 
+  /**
+   * Gets a relative date label for a workout date.
+   * 
+   * Args:
+   *   workoutDate: The workout date as a Date object or ISO string.
+   * 
+   * Returns:
+   *   string: "TODAY", "YESTERDAY", or formatted date like "Mon, 29 Dec".
+   */
+  const getRelativeDateLabel = (workoutDate: Date | string): string => {
+    const workout = new Date(workoutDate);
+    const today = new Date();
+    
+    // Reset time to midnight for accurate date comparison
+    workout.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - workout.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return "TODAY";
+    } else if (diffDays === 1) {
+      return "YESTERDAY";
+    } else {
+      // Format as "Mon, 29 Dec" or similar
+      return workout.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        day: 'numeric', 
+        month: 'short' 
+      });
+    }
+  };
+
   const renderDashboard = () => {
-    // Get yesterday's workout (most recent completed)
-    const yesterdayWorkout = user.history
+    // Get most recent completed workout
+    const recentWorkout = user.history
       .filter(w => w.completed)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
     
@@ -321,29 +372,31 @@ export default function App() {
            </button>
        </header>
 
-       {/* Yesterday's Workout Card */}
-       {yesterdayWorkout && (
+       {/* Recent Workout Card */}
+       {recentWorkout && (
          <div className="bg-slate-800 rounded-2xl p-5 border border-slate-700 mb-4">
            <div className="flex items-center gap-2 mb-3">
              <HistoryIcon size={16} className="text-slate-400" />
-             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Yesterday</h3>
+             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+               {getRelativeDateLabel(recentWorkout.date)}
+             </h3>
            </div>
            <div className="flex items-center justify-between mb-2">
              <span className="text-lg font-bold text-white">
-               {yesterdayWorkout.customName || `Workout ${yesterdayWorkout.type}`}
+               {recentWorkout.customName || `Workout ${recentWorkout.type}`}
              </span>
              <span className="text-xs text-slate-400">
-               {new Date(yesterdayWorkout.date).toLocaleDateString()}
+               {new Date(recentWorkout.date).toLocaleDateString()}
              </span>
            </div>
            <div className="flex flex-wrap gap-2 mt-3">
-             {yesterdayWorkout.exercises.slice(0, 3).map((ex, idx) => (
+             {recentWorkout.exercises.slice(0, 3).map((ex, idx) => (
                <span key={idx} className="text-sm text-slate-300 bg-slate-700/50 px-3 py-1 rounded-lg">
                  {ex.name} {ex.weight}{user.unit}
                </span>
              ))}
-             {yesterdayWorkout.exercises.length > 3 && (
-               <span className="text-sm text-slate-500">+{yesterdayWorkout.exercises.length - 3} more</span>
+             {recentWorkout.exercises.length > 3 && (
+               <span className="text-sm text-slate-500">+{recentWorkout.exercises.length - 3} more</span>
              )}
            </div>
          </div>
@@ -565,6 +618,7 @@ export default function App() {
           nextWorkout={completedWorkout.nextWorkout}
           unit={user.unit}
           schedule={user.schedule}
+          userName={user.name}
         />
       )}
 

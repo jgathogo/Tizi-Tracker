@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
 
 interface SettingsModalProps {
@@ -17,12 +17,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
   const [schedule, setSchedule] = useState<WorkoutSchedule>(
     user.schedule || { frequency: 3, preferredDays: [1, 3, 5], flexible: true }
   );
+  const [profileName, setProfileName] = useState(user.name || '');
+  const [profileDateOfBirth, setProfileDateOfBirth] = useState(user.dateOfBirth || '');
+  const [profileHeight, setProfileHeight] = useState(user.height?.toString() || '');
+  const [profileWeight, setProfileWeight] = useState(user.bodyWeight?.toString() || '');
 
   useEffect(() => {
     if (user.schedule) {
       setSchedule(user.schedule);
     }
-  }, [user.schedule]);
+    setProfileName(user.name || '');
+    setProfileDateOfBirth(user.dateOfBirth || '');
+    setProfileHeight(user.height?.toString() || '');
+    setProfileWeight(user.bodyWeight?.toString() || '');
+  }, [user]);
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
@@ -83,8 +91,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4 backdrop-blur-sm">
-      <div className="bg-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-700">
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+      <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border border-slate-700 overflow-hidden">
+        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 flex-shrink-0">
           <div className="flex items-center gap-2 text-white">
              <Settings size={20} />
              <h3 className="text-lg font-bold">Data & Settings</h3>
@@ -94,7 +102,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           
           {/* Export Section */}
           <div className="space-y-2">
@@ -142,6 +150,89 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                 <FileJson size={18} className="text-slate-500" />
             </button>
             {error && <div className="text-red-400 text-xs px-2">{error}</div>}
+          </div>
+
+          <hr className="border-slate-700" />
+
+          {/* Profile Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <User size={14} /> Profile
+              </h4>
+              {!user.name && (
+                <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-1 rounded-full">
+                  Name required
+                </span>
+              )}
+            </div>
+            
+            {/* Name */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Name *</label>
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => {
+                  setProfileName(e.target.value);
+                  onUpdate({ ...user, name: e.target.value });
+                }}
+                placeholder="Enter your name"
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Date of Birth */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Date of Birth</label>
+              <input
+                type="date"
+                value={profileDateOfBirth}
+                onChange={(e) => {
+                  setProfileDateOfBirth(e.target.value);
+                  onUpdate({ ...user, dateOfBirth: e.target.value });
+                }}
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Height */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Height (cm)</label>
+              <input
+                type="number"
+                value={profileHeight}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setProfileHeight(value);
+                  const numValue = value === '' ? undefined : parseFloat(value);
+                  onUpdate({ ...user, height: numValue });
+                }}
+                placeholder="e.g., 175"
+                min="0"
+                step="0.1"
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Weight */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-300">Weight ({user.unit})</label>
+              <input
+                type="number"
+                value={profileWeight}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setProfileWeight(value);
+                  const numValue = value === '' ? undefined : parseFloat(value);
+                  onUpdate({ ...user, bodyWeight: numValue });
+                }}
+                placeholder={`e.g., 75`}
+                min="0"
+                step="0.1"
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
           </div>
 
           <hr className="border-slate-700" />

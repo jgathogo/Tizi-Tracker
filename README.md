@@ -54,7 +54,7 @@ Visit `http://localhost:3000` in your browser.
 
 ### Deploy to Your Phone
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions on:
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions on:
 - Deploying to Vercel/Netlify (free hosting)
 - Setting up GitHub Pages
 - Accessing via local network
@@ -64,7 +64,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions on:
 
 Need to debug the app on your phone or share issues with developers?
 
-- 🔍 [Remote Debugging Guide](./REMOTE_DEBUGGING.md) - Connect your phone for debugging
+- 🔍 [Remote Debugging Guide](./docs/REMOTE_DEBUGGING.md) - Connect your phone for debugging
 - 📱 Chrome Remote Debugging (Android)
 - 🍎 Safari Web Inspector (iOS)
 - 🌐 ngrok for sharing your local dev server
