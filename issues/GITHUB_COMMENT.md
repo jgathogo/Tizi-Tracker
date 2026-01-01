@@ -46,7 +46,7 @@ We've researched **5 viable approaches**:
 ### 📚 Full Research Document
 
 Complete technical research, implementation details, and cost-benefit analysis available in:
-- [`RESEARCH_HEALTH_INTEGRATION.md`](./RESEARCH_HEALTH_INTEGRATION.md)
+- [`docs/RESEARCH_HEALTH_INTEGRATION.md`](../docs/RESEARCH_HEALTH_INTEGRATION.md)
 
 ### 🔄 Next Steps
 

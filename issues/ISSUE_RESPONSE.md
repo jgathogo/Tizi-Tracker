@@ -56,7 +56,7 @@ Enhance export functionality to make manual sync easier:
 
 ## Full Research Document
 
-See [RESEARCH_HEALTH_INTEGRATION.md](./RESEARCH_HEALTH_INTEGRATION.md) for complete technical details, implementation guides, and cost-benefit analysis.
+See [docs/RESEARCH_HEALTH_INTEGRATION.md](../docs/RESEARCH_HEALTH_INTEGRATION.md) for complete technical details, implementation guides, and cost-benefit analysis.
 
 ## Next Steps
 

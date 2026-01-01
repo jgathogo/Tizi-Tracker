@@ -15,7 +15,7 @@
 
    Or manually:
    ```bash
-   gh issue comment 1 --body-file GITHUB_COMMENT.md
+   gh issue comment 1 --body-file issues/GITHUB_COMMENT.md
    gh issue close 1 --comment "Closing for now. Will reopen when we convert to hybrid app. See comment above for full research."
    ```
 
@@ -25,7 +25,7 @@
    https://github.com/jgathogo/Tizi-Tracker/issues/1
 
 2. **Copy the comment content:**
-   - Open `GITHUB_COMMENT.md` in this repository
+   - Open `issues/GITHUB_COMMENT.md` in this repository
    - Copy all the content
 
 3. **Post the comment:**
@@ -49,6 +49,6 @@ The comment includes:
 ## Full Research Document
 
 The complete technical research is available in:
-- `RESEARCH_HEALTH_INTEGRATION.md` - Full technical details
-- `ISSUE_RESPONSE.md` - Summary version
+- `docs/RESEARCH_HEALTH_INTEGRATION.md` - Full technical details
+- `issues/ISSUE_RESPONSE.md` - Summary version
 

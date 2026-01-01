@@ -9,6 +9,7 @@ interface WorkoutCompleteModalProps {
   nextWorkout: 'A' | 'B';
   unit: 'kg' | 'lb';
   schedule?: WorkoutSchedule;
+  userName?: string;
 }
 
 /**
@@ -133,7 +134,8 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
   workout,
   nextWorkout,
   unit,
-  schedule
+  schedule,
+  userName
 }) => {
   if (!isOpen || !workout) return null;
 
@@ -159,7 +161,9 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
               <Trophy className="text-green-400" size={28} />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-white">Workout Complete! 🎉</h3>
+              <h3 className="text-2xl font-bold text-white">
+                {userName ? `Great job, ${userName}! 🎉` : 'Workout Complete! 🎉'}
+              </h3>
               <p className="text-slate-400 text-sm">Great job finishing your session!</p>
             </div>
           </div>
