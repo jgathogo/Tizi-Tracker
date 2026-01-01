@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
 
 interface SettingsModalProps {
@@ -327,6 +327,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
               <div className="text-xs text-slate-400 mt-1">
                 After completing {user.repeatCount || 2} successful workouts at a weight, the app will automatically increase the weight.
               </div>
+            </div>
+          </div>
+
+          {/* Weight Increments */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp size={14} /> Weight Increments
+            </h4>
+            <div className="text-xs text-slate-400 mb-3">
+              Set how much weight to add when progressing each exercise
+            </div>
+            <div className="space-y-3">
+              {['Squat', 'Bench Press', 'Barbell Row', 'Overhead Press', 'Deadlift'].map(exerciseName => {
+                const defaultIncrement = exerciseName === 'Deadlift' ? 5 : 2.5;
+                const currentIncrement = user.weightIncrements?.[exerciseName] ?? defaultIncrement;
+                return (
+                  <div key={exerciseName} className="flex items-center justify-between">
+                    <label className="text-sm text-slate-300 flex-1">{exerciseName}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={currentIncrement}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || defaultIncrement;
+                          const newIncrements = {
+                            ...(user.weightIncrements || {
+                              'Squat': 2.5,
+                              'Bench Press': 2.5,
+                              'Barbell Row': 2.5,
+                              'Overhead Press': 2.5,
+                              'Deadlift': 5
+                            }),
+                            [exerciseName]: value
+                          };
+                          onUpdate({ ...user, weightIncrements: newIncrements });
+                        }}
+                        min="0"
+                        step="0.5"
+                        className="w-20 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      />
+                      <span className="text-xs text-slate-400 w-8">{user.unit}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-xs text-slate-500 mt-2">
+              These increments are used when automatically progressing weights after completing required attempts.
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
+import { getWeightPerSide, formatPlateBreakdown, getPlateBreakdown } from '../utils/plateCalculator';
 
 interface WarmupCalculatorProps {
   exerciseName: string;
@@ -80,6 +81,20 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
           <div className="mb-4 text-center">
              <span className="text-slate-400 text-sm">Working Weight</span>
              <div className="text-3xl font-bold text-white">{workWeight} <span className="text-lg font-normal text-slate-400">{unit}</span></div>
+             {(() => {
+               const weightPerSide = getWeightPerSide(workWeight, unit as 'kg' | 'lb');
+               const plates = getPlateBreakdown(weightPerSide, unit as 'kg' | 'lb');
+               const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
+               if (weightPerSide <= 0) return null;
+               return (
+                 <div className="text-xs text-slate-400 mt-1">
+                   <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
+                   {plates.length > 0 && (
+                     <span className="text-slate-500 ml-2">({plateText})</span>
+                   )}
+                 </div>
+               );
+             })()}
           </div>
 
           <div className="space-y-2">
@@ -115,11 +130,27 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xl font-bold ${isCompleted ? 'text-green-400' : 'text-amber-500'}`}>
-                        {set.weight}
-                      </span>
-                      <span className="text-xs text-slate-400">{unit}</span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xl font-bold ${isCompleted ? 'text-green-400' : 'text-amber-500'}`}>
+                          {set.weight}
+                        </span>
+                        <span className="text-xs text-slate-400">{unit}</span>
+                      </div>
+                      {(() => {
+                        const weightPerSide = getWeightPerSide(set.weight, unit as 'kg' | 'lb');
+                        const plates = getPlateBreakdown(weightPerSide, unit as 'kg' | 'lb');
+                        const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
+                        if (weightPerSide <= 0) return null;
+                        return (
+                          <div className="text-xs text-slate-500">
+                            <span>{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit}/side</span>
+                            {plates.length > 0 && (
+                              <span className="ml-1">({plateText})</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </button>
                 );
