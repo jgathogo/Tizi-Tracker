@@ -45,6 +45,7 @@ export interface UserProfile {
   name?: string; // User's name for personalization
   dateOfBirth?: string; // Date of birth (ISO format: YYYY-MM-DD)
   height?: number; // Height in cm
+  weightIncrements?: Record<string, number>; // Weight increment per exercise for progression (e.g., { "Squat": 5, "Deadlift": 5 })
 }
 
 export interface SearchResult {

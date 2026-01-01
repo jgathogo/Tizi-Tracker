@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, ExerciseSession, WorkoutSessionData, FormGuideData, WorkoutType } from './types';
+import { UserProfile, ExerciseSession, WorkoutSessionData, FormGuideData, WorkoutType, WorkoutSchedule } from './types';
 import { getExerciseFormGuide } from './services/geminiService';
 import { ExerciseCard } from './components/ExerciseCard';
 import { RestTimer } from './components/RestTimer';
@@ -11,7 +11,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
 import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
 import { Logo } from './components/Logo';
-import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar } from 'lucide-react';
+import { getWeightPerSide } from './utils/plateCalculator';
 
 // --- CONFIGURATION ---
 // Change this variable to rename the app throughout the UI.
@@ -34,7 +35,14 @@ const INITIAL_STATE: UserProfile = {
     flexible: true
   },
   exerciseAttempts: {}, // Track attempt number per exercise at current weight
-  repeatCount: 2 // Repeat each exercise 2 times at a weight before progressing
+  repeatCount: 2, // Repeat each exercise 2 times at a weight before progressing
+  weightIncrements: {
+    'Squat': 2.5,
+    'Bench Press': 2.5,
+    'Barbell Row': 2.5,
+    'Overhead Press': 2.5,
+    'Deadlift': 5
+  }
 };
 
 const PROGRAMS = {
@@ -243,7 +251,9 @@ export default function App() {
                 // Check if we've completed the required number of attempts
                 if (currentAttempt >= repeatCount) {
                     // Progress to next weight and reset attempt counter
-                    const increment = ex.name === 'Deadlift' ? 5 : 2.5; 
+                    // Use user-defined increment, fallback to defaults (2.5kg for most, 5kg for Deadlift)
+                    const defaultIncrement = ex.name === 'Deadlift' ? 5 : 2.5;
+                    const increment = user.weightIncrements?.[ex.name] ?? defaultIncrement;
                     const nextWeight = currentWeight + increment;
                     newWeights[ex.name] = nextWeight;
                     newAttempts[ex.name] = 1; // Reset to 1st attempt at new weight
@@ -341,6 +351,66 @@ export default function App() {
     }
   };
 
+  /**
+   * Calculates the next workout date based on workout schedule.
+   * 
+   * If schedule is provided, finds the next preferred workout day.
+   * If no schedule or flexible mode, defaults to tomorrow.
+   * Uses local device timezone automatically.
+   * 
+   * Args:
+   *   schedule: Optional workout schedule settings.
+   * 
+   * Returns:
+   *   Date: The next workout date in local timezone.
+   */
+  const getNextWorkoutDate = (schedule?: WorkoutSchedule): Date => {
+    const today = new Date();
+    const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // If no schedule, default to tomorrow
+    if (!schedule) {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
+    }
+
+    // If flexible mode, find next preferred day or any day if none preferred
+    if (schedule.flexible) {
+      // Look for next preferred day within next 7 days
+      for (let i = 1; i <= 7; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + i);
+        const checkDay = checkDate.getDay();
+        
+        if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(checkDay)) {
+          return checkDate;
+        }
+      }
+    } else {
+      // Strict mode: only use preferred days
+      // Find the next preferred day
+      const sortedPreferred = [...schedule.preferredDays].sort((a, b) => {
+        // Adjust for week wrap-around
+        const aAdj = a <= todayDay ? a + 7 : a;
+        const bAdj = b <= todayDay ? b + 7 : b;
+        return aAdj - bAdj;
+      });
+      
+      const nextDay = sortedPreferred[0] || schedule.preferredDays[0] || 1;
+      const daysUntilNext = nextDay <= todayDay ? (nextDay + 7) - todayDay : nextDay - todayDay;
+      
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + daysUntilNext);
+      return nextDate;
+    }
+
+    // Fallback to tomorrow
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  };
+
   const renderDashboard = () => {
     // Get most recent completed workout
     const recentWorkout = user.history
@@ -408,14 +478,44 @@ export default function App() {
                <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
                    NEXT 5X5 SESSION
                </div>
-               <h2 className="text-3xl font-bold mb-4">Workout {user.nextWorkout}</h2>
-               <div className="mb-4 space-y-1">
-                 {nextWorkoutPreview.map((ex, idx) => (
-                   <div key={idx} className="text-blue-100 text-sm flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                     {ex.name} - {ex.weight}{user.unit}
+               <h2 className="text-3xl font-bold mb-2">Workout {user.nextWorkout}</h2>
+               {(() => {
+                 const nextDate = getNextWorkoutDate(user.schedule);
+                 const today = new Date();
+                 today.setHours(0, 0, 0, 0);
+                 const nextDateMidnight = new Date(nextDate);
+                 nextDateMidnight.setHours(0, 0, 0, 0);
+                 const daysDiff = Math.round((nextDateMidnight.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                 const isTomorrow = daysDiff === 1;
+                 return (
+                   <div className="flex items-center gap-2 mb-4 text-blue-100">
+                     <Calendar size={16} />
+                     <span className="text-sm font-medium">
+                       {isTomorrow 
+                         ? 'Scheduled for tomorrow'
+                         : `Scheduled for ${nextDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}`
+                       }
+                     </span>
                    </div>
-                 ))}
+                 );
+               })()}
+               <div className="mb-4 space-y-1.5">
+                 {nextWorkoutPreview.map((ex, idx) => {
+                   const weightPerSide = getWeightPerSide(ex.weight, user.unit);
+                   return (
+                     <div key={idx} className="text-blue-100 text-sm">
+                       <div className="flex items-center gap-2">
+                         <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                         <span>{ex.name} - {ex.weight}{user.unit}</span>
+                       </div>
+                       {weightPerSide > 0 && (
+                         <div className="text-blue-200/70 text-xs ml-5 mt-0.5">
+                           {weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{user.unit} / side
+                         </div>
+                       )}
+                     </div>
+                   );
+                 })}
                </div>
                <button 
                 onClick={() => startWorkout(user.nextWorkout)}

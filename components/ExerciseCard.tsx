@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info, Dumbbell, Edit2 } from 'lucide-react';
 import { ExerciseSession } from '../types';
+import { getWeightPerSide, formatPlateBreakdown, getPlateBreakdown } from '../utils/plateCalculator';
 
 interface ExerciseCardProps {
   exercise: ExerciseSession;
@@ -61,17 +62,33 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               )
             )}
           </div>
-          <button 
-            onClick={() => onEditWeight(exercise.name, exercise.weight)}
-            className="group flex items-center gap-2 hover:bg-slate-700/50 p-2 -ml-2 rounded-lg transition-all"
-            title="Edit Weight"
-          >
-             <div className="flex items-baseline gap-1">
-               <span className="text-3xl font-bold text-blue-400 group-hover:text-blue-300 transition-colors">{exercise.weight}</span>
-               <span className="text-sm font-medium text-slate-400">{unit}</span>
-             </div>
-             <Edit2 size={16} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
-          </button>
+          <div className="flex flex-col gap-1">
+            <button 
+              onClick={() => onEditWeight(exercise.name, exercise.weight)}
+              className="group flex items-center gap-2 hover:bg-slate-700/50 p-2 -ml-2 rounded-lg transition-all"
+              title="Edit Weight"
+            >
+               <div className="flex items-baseline gap-1">
+                 <span className="text-3xl font-bold text-blue-400 group-hover:text-blue-300 transition-colors">{exercise.weight}</span>
+                 <span className="text-sm font-medium text-slate-400">{unit}</span>
+               </div>
+               <Edit2 size={16} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+            </button>
+            {(() => {
+              const weightPerSide = getWeightPerSide(exercise.weight, unit as 'kg' | 'lb');
+              const plates = getPlateBreakdown(weightPerSide, unit as 'kg' | 'lb');
+              const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
+              if (weightPerSide <= 0) return null;
+              return (
+                <div className="text-xs text-slate-400 ml-2">
+                  <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
+                  {plates.length > 0 && (
+                    <span className="text-slate-500 ml-2">({plateText})</span>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
         </div>
         <div className="flex gap-2">
             <button 
