@@ -64,3 +64,4 @@ The weight per side and plate breakdown feature has been fully implemented! User
 
 The feature is complete and ready to use! Users can now load the bar faster without mental calculations. 🎉💪
 
+
