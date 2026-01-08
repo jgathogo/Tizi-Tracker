@@ -1,17 +1,38 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { isAuthAvailable } from '../services/authService';
+import { isSyncAvailable, saveToCloud } from '../services/syncService';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserProfile;
   onImport: (data: UserProfile) => void;
-  onReset: () => void;
+  onReset: () => Promise<void>;
   onUpdate: (data: UserProfile) => void;
+  firebaseUser?: FirebaseUser | null;
+  syncStatus?: 'idle' | 'syncing' | 'synced' | 'error';
+  lastSynced?: Date | null;
+  onOpenAuth?: () => void;
+  onSignOut?: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, user, onImport, onReset, onUpdate }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  user, 
+  onImport, 
+  onReset, 
+  onUpdate,
+  firebaseUser,
+  syncStatus = 'idle',
+  lastSynced,
+  onOpenAuth,
+  onSignOut
+}) => {
+  const [manualSyncLoading, setManualSyncLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<WorkoutSchedule>(
@@ -304,29 +325,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
             </div>
           </div>
 
-          {/* Exercise Repeat Count */}
+          {/* Repeat Count Per Exercise */}
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Progression Settings</h4>
-            <div className="space-y-2">
-              <label className="text-xs text-slate-300">Repeat each exercise at weight before progressing</label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map(count => (
-                  <button
-                    key={count}
-                    onClick={() => onUpdate({ ...user, repeatCount: count })}
-                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
-                      (user.repeatCount || 2) === count
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    {count}x
-                  </button>
-                ))}
-              </div>
-              <div className="text-xs text-slate-400 mt-1">
-                After completing {user.repeatCount || 2} successful workouts at a weight, the app will automatically increase the weight.
-              </div>
+            <div className="text-xs text-slate-400 mb-3">
+              Set how many times to repeat each exercise at a weight before progressing
+            </div>
+            <div className="space-y-3">
+              {['Squat', 'Bench Press', 'Barbell Row', 'Overhead Press', 'Deadlift'].map(exerciseName => {
+                const currentRepeatCount = user.repeatCount?.[exerciseName] ?? 2;
+                return (
+                  <div key={exerciseName} className="flex items-center justify-between">
+                    <label className="text-sm text-slate-300 flex-1">{exerciseName}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={currentRepeatCount}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10) || 2;
+                          const newRepeatCounts = {
+                            ...(user.repeatCount || {
+                              'Squat': 2,
+                              'Bench Press': 2,
+                              'Barbell Row': 2,
+                              'Overhead Press': 2,
+                              'Deadlift': 2
+                            }),
+                            [exerciseName]: value
+                          };
+                          onUpdate({ ...user, repeatCount: newRepeatCounts });
+                        }}
+                        min="1"
+                        step="1"
+                        className="w-20 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      />
+                      <span className="text-xs text-slate-400 w-8">times</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-xs text-slate-500 mt-2">
+              After completing the required number of successful workouts at a weight, the app will automatically increase the weight.
             </div>
           </div>
 
@@ -380,17 +420,140 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
 
           <hr className="border-slate-700" />
 
+          {/* Cloud Sync Section */}
+          {isAuthAvailable() && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <Cloud size={14} /> Cloud Sync
+              </h4>
+              
+              {firebaseUser ? (
+                // Signed in
+                <div className="space-y-3">
+                  <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={16} className="text-green-400" />
+                        <span className="text-sm font-medium text-green-300">Signed in</span>
+                      </div>
+                      <button
+                        onClick={onSignOut}
+                        className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                      >
+                        <LogOut size={12} />
+                        Sign out
+                      </button>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {firebaseUser.email}
+                    </div>
+                  </div>
+
+                  {/* Sync Status */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      {syncStatus === 'syncing' && (
+                        <>
+                          <RefreshCw size={14} className="text-blue-400 animate-spin" />
+                          <span className="text-slate-300">Syncing...</span>
+                        </>
+                      )}
+                      {syncStatus === 'synced' && (
+                        <>
+                          <CheckCircle2 size={14} className="text-green-400" />
+                          <span className="text-slate-300">Synced</span>
+                        </>
+                      )}
+                      {syncStatus === 'error' && (
+                        <>
+                          <AlertTriangle size={14} className="text-red-400" />
+                          <span className="text-red-300">Sync error</span>
+                        </>
+                      )}
+                      {syncStatus === 'idle' && (
+                        <>
+                          <Cloud size={14} className="text-slate-400" />
+                          <span className="text-slate-400">Not synced</span>
+                        </>
+                      )}
+                    </div>
+                    {lastSynced && (
+                      <span className="text-xs text-slate-500">
+                        {lastSynced.toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Manual Sync Button */}
+                  <button
+                    onClick={async () => {
+                      if (!isSyncAvailable()) return;
+                      setManualSyncLoading(true);
+                      try {
+                        await saveToCloud(user);
+                        alert('✅ Data synced to cloud!');
+                      } catch (error: any) {
+                        alert('❌ Failed to sync: ' + (error.message || 'Unknown error'));
+                      } finally {
+                        setManualSyncLoading(false);
+                      }
+                    }}
+                    disabled={manualSyncLoading || syncStatus === 'syncing' || !isSyncAvailable()}
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-600/30 rounded-xl transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {manualSyncLoading ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        Syncing...
+                      </>
+                    ) : (
+                      <>
+                        <Cloud size={16} />
+                        Sync Now
+                      </>
+                    )}
+                  </button>
+
+                  <div className="text-xs text-slate-500 mt-2">
+                    Your data automatically syncs to the cloud when online. 
+                    All data is encrypted and only you can access it.
+                  </div>
+                </div>
+              ) : (
+                // Not signed in
+                <div className="space-y-3">
+                  <div className="bg-slate-900/40 border border-slate-700 rounded-lg p-4 text-center">
+                    <CloudOff size={24} className="text-slate-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-300 mb-3">
+                      Sign in to sync your workout data across all your devices
+                    </p>
+                    <button
+                      onClick={onOpenAuth}
+                      className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium text-sm"
+                    >
+                      <LogIn size={16} />
+                      Sign In / Sign Up
+                    </button>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Cloud sync is optional. Your data is always saved locally and can be exported.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <hr className="border-slate-700" />
+
           {/* Danger Zone */}
           <div className="space-y-2">
              <h4 className="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
                  <AlertTriangle size={14} /> Danger Zone
              </h4>
              <button 
-                onClick={() => {
-                    if(window.confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {
-                        onReset();
-                        onClose();
-                    }
+                onClick={async () => {
+                    await onReset();
+                    onClose();
                 }}
                 className="w-full flex items-center justify-center gap-2 p-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-xl transition-colors font-medium text-sm"
             >

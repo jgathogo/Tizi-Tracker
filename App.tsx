@@ -11,8 +11,13 @@ import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
 import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
 import { Logo } from './components/Logo';
-import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar } from 'lucide-react';
+import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle } from 'lucide-react';
 import { getWeightPerSide } from './utils/plateCalculator';
+import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSinceLastBackup } from './utils/backup';
+import { AuthModal } from './components/AuthModal';
+import { onAuthStateChange, getCurrentUser, signOut, isAuthAvailable } from './services/authService';
+import { saveToCloud, loadFromCloud, mergeData, isSyncAvailable } from './services/syncService';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 // --- CONFIGURATION ---
 // Change this variable to rename the app throughout the UI.
@@ -35,7 +40,13 @@ const INITIAL_STATE: UserProfile = {
     flexible: true
   },
   exerciseAttempts: {}, // Track attempt number per exercise at current weight
-  repeatCount: 2, // Repeat each exercise 2 times at a weight before progressing
+  repeatCount: {
+    'Squat': 2,
+    'Bench Press': 2,
+    'Barbell Row': 2,
+    'Overhead Press': 2,
+    'Deadlift': 2
+  }, // Repeat count per exercise before progressing
   weightIncrements: {
     'Squat': 2.5,
     'Bench Press': 2.5,
@@ -63,6 +74,12 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
   const [completedWorkout, setCompletedWorkout] = useState<{workout: WorkoutSessionData, nextWorkout: 'A' | 'B'} | null>(null);
+  
+  // Cloud Sync / Authentication state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   useEffect(() => {
     // Try new key first, fallback to old key for migration
@@ -70,6 +87,18 @@ export default function App() {
     if (saved) {
       try {
         const loaded = JSON.parse(saved);
+        // Migrate global repeatCount to per-exercise format if needed
+        if (loaded.repeatCount && typeof loaded.repeatCount === 'number') {
+          const globalValue = loaded.repeatCount;
+          loaded.repeatCount = {
+            'Squat': globalValue,
+            'Bench Press': globalValue,
+            'Barbell Row': globalValue,
+            'Overhead Press': globalValue,
+            'Deadlift': globalValue
+          };
+          console.log('🔄 Tizi Tracker: Migrated global repeatCount to per-exercise format', loaded.repeatCount);
+        }
         setUser(loaded);
         // Migrate to new key if using old key
         if (localStorage.getItem('powerlifts_data') && !localStorage.getItem('tizi_tracker_data')) {
@@ -105,7 +134,85 @@ export default function App() {
     }
   }, []);
 
+  // Auth state listener - watch for sign in/out
+  useEffect(() => {
+    if (!isAuthAvailable()) return;
 
+    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+      setFirebaseUser(firebaseUser);
+      
+      if (firebaseUser) {
+        // User signed in - load data from cloud and merge with local
+        console.log('✅ User signed in:', firebaseUser.email);
+        try {
+          setSyncStatus('syncing');
+          
+          // Get current local data
+          const localSaved = localStorage.getItem('tizi_tracker_data');
+          const localData = localSaved ? JSON.parse(localSaved) : user;
+          
+          const cloudData = await loadFromCloud();
+          
+          if (cloudData) {
+            // Merge cloud data with local data
+            const merged = mergeData(localData, cloudData);
+            setUser(merged);
+            // Save merged data locally
+            localStorage.setItem('tizi_tracker_data', JSON.stringify(merged));
+            console.log('✅ Cloud data merged with local data');
+          } else {
+            // No cloud data yet - offer to sync local data to cloud
+            if (localData.history && localData.history.length > 0) {
+              const shouldSync = window.confirm(
+                'Would you like to sync your existing workout data to the cloud?\n\n' +
+                'This will make your data available on all devices.'
+              );
+              if (shouldSync) {
+                await saveToCloud(localData);
+                setSyncStatus('synced');
+                setLastSynced(new Date());
+              }
+            }
+          }
+          setSyncStatus('synced');
+          setLastSynced(new Date());
+        } catch (error) {
+          console.error('❌ Failed to sync on sign-in:', error);
+          setSyncStatus('error');
+        }
+      } else {
+        // User signed out
+        console.log('ℹ️ User signed out');
+        setSyncStatus('idle');
+        setLastSynced(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []); // Only run once on mount
+
+  // Sync to cloud when user data changes (if signed in)
+  useEffect(() => {
+    if (!isSyncAvailable() || !firebaseUser) return;
+
+    // Debounce sync - only sync after a short delay to avoid too many requests
+    const syncTimeout = setTimeout(async () => {
+      try {
+        setSyncStatus('syncing');
+        await saveToCloud(user);
+        setSyncStatus('synced');
+        setLastSynced(new Date());
+        console.log('✅ Data synced to cloud');
+      } catch (error) {
+        console.error('❌ Failed to sync to cloud:', error);
+        setSyncStatus('error');
+      }
+    }, 2000); // Wait 2 seconds after last change before syncing
+
+    return () => clearTimeout(syncTimeout);
+  }, [user, firebaseUser]); // Sync whenever user data or auth state changes
+
+  // Save to localStorage (always, regardless of cloud sync)
   useEffect(() => {
     try {
       localStorage.setItem('tizi_tracker_data', JSON.stringify(user));
@@ -237,7 +344,6 @@ export default function App() {
 
     const newWeights = { ...user.currentWeights };
     const newAttempts = { ...(user.exerciseAttempts || {}) };
-    const repeatCount = user.repeatCount || 2;
     const completedExercises = activeSession.exercises;
 
     // Only progress if it was a standard 5x5 workout
@@ -246,6 +352,8 @@ export default function App() {
             const currentWeight = ex.weight;
             const currentAttempt = ex.attempt || 1;
             const allSetsDone = ex.sets.every(r => r === 5);
+            // Get per-exercise repeat count, fallback to 2 if not set
+            const repeatCount = user.repeatCount?.[ex.name] ?? 2;
             
             if (allSetsDone) {
                 // Check if we've completed the required number of attempts
@@ -301,6 +409,19 @@ export default function App() {
     // Show completion modal
     setCompletedWorkout({ workout: completedSession, nextWorkout });
     
+    // Auto-backup after workout completion (silent, no prompt)
+    setTimeout(() => {
+      const updatedUser = {
+        ...user,
+        currentWeights: newWeights,
+        exerciseAttempts: newAttempts,
+        history: [completedSession, ...user.history],
+        nextWorkout
+      };
+      exportUserData(updatedUser);
+      console.log('💾 Tizi Tracker: Auto-backup created after workout completion');
+    }, 1000);
+    
     // Clear active session
     setActiveSession(null);
   };
@@ -308,6 +429,16 @@ export default function App() {
   const cancelWorkout = () => {
       if (window.confirm("Are you sure? This session won't be saved.")) {
           setActiveSession(null);
+      }
+  };
+
+  const deleteWorkout = (workoutId: string) => {
+      if (window.confirm("Are you sure you want to delete this workout? This cannot be undone.")) {
+          setUser(prev => ({
+              ...prev,
+              history: prev.history.filter(w => w.id !== workoutId)
+          }));
+          console.log('🗑️ Tizi Tracker: Workout deleted', workoutId);
       }
   };
 
@@ -352,20 +483,24 @@ export default function App() {
   };
 
   /**
-   * Calculates the next workout date based on workout schedule.
+   * Calculates the next workout date based on workout schedule and last workout.
    * 
-   * If schedule is provided, finds the next preferred workout day.
-   * If no schedule or flexible mode, defaults to tomorrow.
-   * Uses local device timezone automatically.
+   * Considers:
+   * - Last workout date from history
+   * - Schedule frequency (workouts per week)
+   * - Preferred days
+   * - Minimum rest days between workouts
    * 
    * Args:
    *   schedule: Optional workout schedule settings.
+   *   lastWorkoutDate: Optional date of the last completed workout.
    * 
    * Returns:
    *   Date: The next workout date in local timezone.
    */
-  const getNextWorkoutDate = (schedule?: WorkoutSchedule): Date => {
+  const getNextWorkoutDate = (schedule?: WorkoutSchedule, lastWorkoutDate?: Date): Date => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to midnight
     const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
     // If no schedule, default to tomorrow
@@ -375,10 +510,83 @@ export default function App() {
       return tomorrow;
     }
 
-    // If flexible mode, find next preferred day or any day if none preferred
+    // Calculate minimum days between workouts based on frequency
+    // e.g., 3x/week = ~2.3 days between, so minimum 1 day rest
+    // e.g., 2x/week = ~3.5 days between, so minimum 2 days rest
+    const minDaysBetween = schedule.frequency >= 3 ? 1 : schedule.frequency === 2 ? 2 : 3;
+
+    // If we have a last workout date, check if enough time has passed
+    if (lastWorkoutDate) {
+      const lastDate = new Date(lastWorkoutDate);
+      lastDate.setHours(0, 0, 0, 0);
+      const daysSinceLast = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // If not enough time has passed, we need to look ahead
+      if (daysSinceLast < minDaysBetween) {
+        // Need to wait at least minDaysBetween days
+        const daysToWait = minDaysBetween - daysSinceLast;
+        const earliestDate = new Date(today);
+        earliestDate.setDate(today.getDate() + daysToWait);
+        const earliestDay = earliestDate.getDay();
+        
+        // Check if the earliest possible date is a preferred day
+        if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(earliestDay)) {
+          return earliestDate;
+        }
+        
+        // Otherwise, find the next preferred day after the minimum wait period
+        if (schedule.flexible) {
+          for (let i = daysToWait; i <= 14; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() + i);
+            const checkDay = checkDate.getDay();
+            
+            if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(checkDay)) {
+              return checkDate;
+            }
+          }
+        } else {
+          // Strict mode: find next preferred day after minimum wait
+          const sortedPreferred = [...schedule.preferredDays].sort((a, b) => {
+            const aAdj = a <= earliestDay ? a + 7 : a;
+            const bAdj = b <= earliestDay ? b + 7 : b;
+            return aAdj - bAdj;
+          });
+          
+          const nextDay = sortedPreferred[0] || schedule.preferredDays[0] || 1;
+          let daysUntilNext = nextDay <= earliestDay ? (nextDay + 7) - earliestDay : nextDay - earliestDay;
+          daysUntilNext = Math.max(daysUntilNext, daysToWait); // Ensure minimum wait
+          
+          const nextDate = new Date(today);
+          nextDate.setDate(today.getDate() + daysUntilNext);
+          return nextDate;
+        }
+      }
+    }
+
+    // If enough time has passed (or no last workout), check if today is valid
+    if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(todayDay)) {
+      // Check if a workout was already done today
+      if (lastWorkoutDate) {
+        const lastDate = new Date(lastWorkoutDate);
+        lastDate.setHours(0, 0, 0, 0);
+        const daysSinceLast = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceLast === 0) {
+          // Workout was done today, so next is tomorrow or later
+          // Fall through to find next preferred day
+        } else {
+          // Enough time has passed, today is valid
+          return today;
+        }
+      } else {
+        // No previous workout, today is valid if it's a preferred day
+        return today;
+      }
+    }
+
+    // Find next preferred day
     if (schedule.flexible) {
-      // Look for next preferred day within next 7 days
-      for (let i = 1; i <= 7; i++) {
+      for (let i = 1; i <= 14; i++) {
         const checkDate = new Date(today);
         checkDate.setDate(today.getDate() + i);
         const checkDay = checkDate.getDay();
@@ -389,9 +597,7 @@ export default function App() {
       }
     } else {
       // Strict mode: only use preferred days
-      // Find the next preferred day
       const sortedPreferred = [...schedule.preferredDays].sort((a, b) => {
-        // Adjust for week wrap-around
         const aAdj = a <= todayDay ? a + 7 : a;
         const bAdj = b <= todayDay ? b + 7 : b;
         return aAdj - bAdj;
@@ -434,13 +640,58 @@ export default function App() {
                    <p className="text-slate-400">Log your progress, whatever the activity.</p>
                </div>
            </div>
-           <button 
-             onClick={() => setSettingsOpen(true)}
-             className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-colors"
-           >
-               <Settings size={20} />
-           </button>
+           <div className="flex gap-2">
+               <button 
+                 onClick={() => {
+                   if (exportUserData(user)) {
+                     alert('✅ Backup saved! Check your Downloads folder.');
+                   } else {
+                     alert('❌ Failed to save backup. Please try again.');
+                   }
+                 }}
+                 className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-xl border border-green-500 transition-colors flex items-center gap-2"
+                 title="Save Backup to Device"
+               >
+                   <Download size={18} />
+               </button>
+               <button 
+                 onClick={() => setSettingsOpen(true)}
+                 className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-colors"
+               >
+                   <Settings size={20} />
+               </button>
+           </div>
        </header>
+
+       {/* Backup Reminder */}
+       {shouldShowBackupReminder() && (
+         <div className="bg-amber-900/30 border border-amber-600/50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+           <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+           <div className="flex-1">
+             <div className="text-sm font-semibold text-amber-300 mb-1">
+               Backup Recommended
+             </div>
+             <div className="text-xs text-amber-400/80 mb-2">
+               {getLastBackupDate() 
+                 ? `Last backup: ${getLastBackupDate()!.toLocaleDateString()} (${getDaysSinceLastBackup()} days ago)`
+                 : 'You haven\'t created a backup yet. Save your data to your device now!'}
+             </div>
+             <button
+               onClick={() => {
+                 if (exportUserData(user)) {
+                   alert('✅ Backup saved! Check your Downloads folder.');
+                 } else {
+                   alert('❌ Failed to save backup. Please try again.');
+                 }
+               }}
+               className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+             >
+               <Download size={14} />
+               Save Backup Now
+             </button>
+           </div>
+         </div>
+       )}
 
        {/* Recent Workout Card */}
        {recentWorkout && (
@@ -480,18 +731,27 @@ export default function App() {
                </div>
                <h2 className="text-3xl font-bold mb-2">Workout {user.nextWorkout}</h2>
                {(() => {
-                 const nextDate = getNextWorkoutDate(user.schedule);
+                 // Get last workout date
+                 const lastWorkout = user.history
+                   .filter(w => w.completed)
+                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                 const lastWorkoutDate = lastWorkout ? new Date(lastWorkout.date) : undefined;
+                 
+                 const nextDate = getNextWorkoutDate(user.schedule, lastWorkoutDate);
                  const today = new Date();
                  today.setHours(0, 0, 0, 0);
                  const nextDateMidnight = new Date(nextDate);
                  nextDateMidnight.setHours(0, 0, 0, 0);
                  const daysDiff = Math.round((nextDateMidnight.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                 const isToday = daysDiff === 0;
                  const isTomorrow = daysDiff === 1;
                  return (
                    <div className="flex items-center gap-2 mb-4 text-blue-100">
                      <Calendar size={16} />
                      <span className="text-sm font-medium">
-                       {isTomorrow 
+                       {isToday
+                         ? 'Scheduled for today'
+                         : isTomorrow 
                          ? 'Scheduled for tomorrow'
                          : `Scheduled for ${nextDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}`
                        }
@@ -659,7 +919,7 @@ export default function App() {
                             <h2 className="text-2xl font-bold text-white">Activity Log</h2>
                             <button onClick={() => setSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Settings size={18} /></button>
                         </header>
-                        <History history={user.history} unit={user.unit} />
+                        <History history={user.history} unit={user.unit} onDelete={deleteWorkout} />
                     </div>
                 )}
                 {activeTab === 'progress' && (
@@ -700,8 +960,39 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         user={user}
         onImport={(data) => setUser(data)}
-        onReset={() => setUser(INITIAL_STATE)}
+        onReset={async () => {
+          if (window.confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {
+            const resetState = INITIAL_STATE;
+            setUser(resetState);
+            
+            // If signed in, immediately sync the reset state to cloud (no debounce)
+            if (firebaseUser && isSyncAvailable()) {
+              try {
+                setSyncStatus('syncing');
+                await saveToCloud(resetState);
+                setSyncStatus('synced');
+                setLastSynced(new Date());
+                console.log('✅ Reset state synced to cloud');
+              } catch (error) {
+                console.error('❌ Failed to sync reset to cloud:', error);
+                setSyncStatus('error');
+              }
+            }
+          }
+        }}
         onUpdate={(data) => setUser(data)}
+        firebaseUser={firebaseUser}
+        syncStatus={syncStatus}
+        lastSynced={lastSynced}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onSignOut={async () => {
+          try {
+            await signOut();
+            setFirebaseUser(null);
+          } catch (error) {
+            console.error('Failed to sign out:', error);
+          }
+        }}
       />
       
       <AddExerciseModal
@@ -721,6 +1012,15 @@ export default function App() {
           userName={user.name}
         />
       )}
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={() => {
+          setAuthModalOpen(false);
+          // Auth state change will trigger sync in useEffect
+        }}
+      />
 
       {guideModal && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
