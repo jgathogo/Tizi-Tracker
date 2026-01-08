@@ -1,13 +1,14 @@
 import React from 'react';
 import { UserProfile } from '../types';
-import { Calendar, CheckCircle, XCircle, Dumbbell } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Dumbbell, Trash2 } from 'lucide-react';
 
 interface HistoryProps {
   history: UserProfile['history'];
   unit: string;
+  onDelete?: (workoutId: string) => void;
 }
 
-export const History: React.FC<HistoryProps> = ({ history, unit }) => {
+export const History: React.FC<HistoryProps> = ({ history, unit, onDelete }) => {
   // Sort by date desc
   const sorted = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -40,6 +41,15 @@ export const History: React.FC<HistoryProps> = ({ history, unit }) => {
                     <span>{totalVolume.toLocaleString()} {unit}</span>
                  </div>
                  {workout.completed ? <CheckCircle size={18} className="text-green-500" /> : <XCircle size={18} className="text-red-500" />}
+                 {onDelete && (
+                   <button
+                     onClick={() => onDelete(workout.id)}
+                     className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                     title="Delete workout"
+                   >
+                     <Trash2 size={16} />
+                   </button>
+                 )}
               </div>
             </div>
             

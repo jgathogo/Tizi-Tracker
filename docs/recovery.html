@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizi Tracker - Data Recovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .status {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #065f46;
+            border: 1px solid #10b981;
+            color: #d1fae5;
+        }
+        .status.error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            color: #fee2e2;
+        }
+        .status.info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            color: #dbeafe;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:active {
+            background: #1d4ed8;
+        }
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+        .data-preview {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .data-preview::-webkit-scrollbar {
+            width: 8px;
+        }
+        .data-preview::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .data-preview::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        .instructions {
+            background: #334155;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .instructions h3 {
+            color: #60a5fa;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Tizi Tracker Data Recovery</h1>
+        <p class="subtitle">Check and recover your workout data</p>
+        
+        <div id="status"></div>
+        <div id="dataPreview"></div>
+        
+        <button id="checkBtn" onclick="checkData()">Check for Data</button>
+        <button id="exportBtn" onclick="exportData()" style="display: none;">Download Backup</button>
+        <button id="clearBtn" onclick="clearData()" style="display: none; background: #dc2626;">Clear All Data (Danger!)</button>
+        
+        <div class="instructions">
+            <h3>📋 How to Restore Data</h3>
+            <ol>
+                <li>Click "Check for Data" above</li>
+                <li>If data is found, click "Download Backup"</li>
+                <li>Open Tizi Tracker app</li>
+                <li>Go to Settings → Import Data</li>
+                <li>Select the downloaded backup file</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let foundData = null;
+        let foundKey = null;
+
+        function checkData() {
+            const statusDiv = document.getElementById('status');
+            const previewDiv = document.getElementById('dataPreview');
+            const exportBtn = document.getElementById('exportBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            // Check both keys
+            const key1 = 'tizi_tracker_data';
+            const key2 = 'powerlifts_data';
+            
+            const data1 = localStorage.getItem(key1);
+            const data2 = localStorage.getItem(key2);
+            
+            foundData = data1 || data2;
+            foundKey = data1 ? key1 : (data2 ? key2 : null);
+            
+            if (foundData) {
+                try {
+                    const parsed = JSON.parse(foundData);
+                    const historyCount = parsed.history?.length || 0;
+                    const lastWorkout = parsed.history?.[0]?.date || 'N/A';
+                    
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Data Found!</strong><br>
+                            Storage key: ${foundKey}<br>
+                            History entries: ${historyCount}<br>
+                            Last workout: ${lastWorkout}
+                        </div>
+                    `;
+                    
+                    previewDiv.innerHTML = `
+                        <div class="data-preview">
+                            <strong>Data Preview:</strong><br>
+                            ${JSON.stringify(parsed, null, 2).substring(0, 500)}...
+                        </div>
+                    `;
+                    
+                    exportBtn.style.display = 'block';
+                    clearBtn.style.display = 'block';
+                    
+                } catch (e) {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            <strong>⚠️ Data Found But Corrupted</strong><br>
+                            Error: ${e.message}<br>
+                            You can still try to export the raw data.
+                        </div>
+                    `;
+                    exportBtn.style.display = 'block';
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ No Data Found</strong><br>
+                        No data found in localStorage for either key.<br>
+                        This could mean:<br>
+                        • Data was cleared<br>
+                        • You're on a different domain/URL<br>
+                        • Browser storage was cleared
+                    </div>
+                `;
+                previewDiv.innerHTML = '';
+                exportBtn.style.display = 'none';
+                clearBtn.style.display = 'none';
+            }
+        }
+
+        function exportData() {
+            if (!foundData) {
+                alert('No data to export!');
+                return;
+            }
+            
+            try {
+                const blob = new Blob([foundData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'tizi_recovery_' + new Date().toISOString().split('T')[0] + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('status').innerHTML = `
+                    <div class="status success">
+                        <strong>✅ Backup Downloaded!</strong><br>
+                        Check your Downloads folder for the file.<br>
+                        Then import it in Tizi Tracker: Settings → Import Data
+                    </div>
+                `;
+            } catch (e) {
+                alert('Error creating backup: ' + e.message);
+            }
+        }
+
+        function clearData() {
+            if (!confirm('⚠️ WARNING: This will permanently delete all your workout data!\n\nAre you absolutely sure?')) {
+                return;
+            }
+            
+            if (!confirm('This cannot be undone. Are you REALLY sure?')) {
+                return;
+            }
+            
+            localStorage.removeItem('tizi_tracker_data');
+            localStorage.removeItem('powerlifts_data');
+            
+            document.getElementById('status').innerHTML = `
+                <div class="status error">
+                    <strong>🗑️ All Data Cleared</strong><br>
+                    All workout data has been removed from localStorage.
+                </div>
+            `;
+            
+            document.getElementById('dataPreview').innerHTML = '';
+            document.getElementById('exportBtn').style.display = 'none';
+            document.getElementById('clearBtn').style.display = 'none';
+        }
+
+        // Auto-check on load
+        window.onload = function() {
+            checkData();
+        };
+    </script>
+</body>
+</html>
+
+

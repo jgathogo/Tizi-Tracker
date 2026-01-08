@@ -51,19 +51,24 @@ const calculateCalories = (workout: WorkoutSessionData, unit: 'kg' | 'lb'): numb
 };
 
 /**
- * Calculates the next workout date based on workout schedule.
+ * Calculates the next workout date based on workout schedule and last workout.
  * 
- * If schedule is provided, finds the next preferred workout day.
- * If no schedule or flexible mode, defaults to tomorrow.
+ * Considers:
+ * - Last workout date
+ * - Schedule frequency (workouts per week)
+ * - Preferred days
+ * - Minimum rest days between workouts
  * 
  * Args:
  *   schedule: Optional workout schedule settings.
+ *   lastWorkoutDate: Optional date of the last completed workout.
  * 
  * Returns:
  *   Date: The next workout date.
  */
-const getNextWorkoutDate = (schedule?: WorkoutSchedule): Date => {
+const getNextWorkoutDate = (schedule?: WorkoutSchedule, lastWorkoutDate?: Date): Date => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to midnight
   const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
   
   // If no schedule, default to tomorrow
@@ -73,10 +78,83 @@ const getNextWorkoutDate = (schedule?: WorkoutSchedule): Date => {
     return tomorrow;
   }
 
-  // If flexible mode, find next preferred day or any day if none preferred
+  // Calculate minimum days between workouts based on frequency
+  // e.g., 3x/week = ~2.3 days between, so minimum 1 day rest
+  // e.g., 2x/week = ~3.5 days between, so minimum 2 days rest
+  const minDaysBetween = schedule.frequency >= 3 ? 1 : schedule.frequency === 2 ? 2 : 3;
+
+  // If we have a last workout date, check if enough time has passed
+  if (lastWorkoutDate) {
+    const lastDate = new Date(lastWorkoutDate);
+    lastDate.setHours(0, 0, 0, 0);
+    const daysSinceLast = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If not enough time has passed, we need to look ahead
+    if (daysSinceLast < minDaysBetween) {
+      // Need to wait at least minDaysBetween days
+      const daysToWait = minDaysBetween - daysSinceLast;
+      const earliestDate = new Date(today);
+      earliestDate.setDate(today.getDate() + daysToWait);
+      const earliestDay = earliestDate.getDay();
+      
+      // Check if the earliest possible date is a preferred day
+      if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(earliestDay)) {
+        return earliestDate;
+      }
+      
+      // Otherwise, find the next preferred day after the minimum wait period
+      if (schedule.flexible) {
+        for (let i = daysToWait; i <= 14; i++) {
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() + i);
+          const checkDay = checkDate.getDay();
+          
+          if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(checkDay)) {
+            return checkDate;
+          }
+        }
+      } else {
+        // Strict mode: find next preferred day after minimum wait
+        const sortedPreferred = [...schedule.preferredDays].sort((a, b) => {
+          const aAdj = a <= earliestDay ? a + 7 : a;
+          const bAdj = b <= earliestDay ? b + 7 : b;
+          return aAdj - bAdj;
+        });
+        
+        const nextDay = sortedPreferred[0] || schedule.preferredDays[0] || 1;
+        let daysUntilNext = nextDay <= earliestDay ? (nextDay + 7) - earliestDay : nextDay - earliestDay;
+        daysUntilNext = Math.max(daysUntilNext, daysToWait); // Ensure minimum wait
+        
+        const nextDate = new Date(today);
+        nextDate.setDate(today.getDate() + daysUntilNext);
+        return nextDate;
+      }
+    }
+  }
+
+  // If enough time has passed (or no last workout), check if today is valid
+  if (schedule.preferredDays.length === 0 || schedule.preferredDays.includes(todayDay)) {
+    // Check if a workout was already done today
+    if (lastWorkoutDate) {
+      const lastDate = new Date(lastWorkoutDate);
+      lastDate.setHours(0, 0, 0, 0);
+      const daysSinceLast = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceLast === 0) {
+        // Workout was done today, so next is tomorrow or later
+        // Fall through to find next preferred day
+      } else {
+        // Enough time has passed, today is valid
+        return today;
+      }
+    } else {
+      // No previous workout, today is valid if it's a preferred day
+      return today;
+    }
+  }
+
+  // Find next preferred day
   if (schedule.flexible) {
-    // Look for next preferred day within next 7 days
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 14; i++) {
       const checkDate = new Date(today);
       checkDate.setDate(today.getDate() + i);
       const checkDay = checkDate.getDay();
@@ -87,9 +165,7 @@ const getNextWorkoutDate = (schedule?: WorkoutSchedule): Date => {
     }
   } else {
     // Strict mode: only use preferred days
-    // Find the next preferred day
     const sortedPreferred = [...schedule.preferredDays].sort((a, b) => {
-      // Adjust for week wrap-around
       const aAdj = a <= todayDay ? a + 7 : a;
       const bAdj = b <= todayDay ? b + 7 : b;
       return aAdj - bAdj;
@@ -140,7 +216,9 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
   if (!isOpen || !workout) return null;
 
   const calories = calculateCalories(workout, unit);
-  const nextDate = getNextWorkoutDate(schedule);
+  // Use the completed workout's date as the last workout date
+  const lastWorkoutDate = new Date(workout.date);
+  const nextDate = getNextWorkoutDate(schedule, lastWorkoutDate);
   const duration = workout.endTime && workout.startTime
     ? Math.round((workout.endTime - workout.startTime) / 1000 / 60)
     : null;

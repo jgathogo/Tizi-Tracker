@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check LocalStorage</title>
+</head>
+<body>
+    <h1>LocalStorage Data Check</h1>
+    <div id="output"></div>
+    <script>
+        const output = document.getElementById('output');
+        const keys = ['tizi_tracker_data', 'powerlifts_data'];
+        
+        keys.forEach(key => {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    const div = document.createElement('div');
+                    div.style.margin = '20px 0';
+                    div.style.padding = '10px';
+                    div.style.border = '1px solid #ccc';
+                    div.innerHTML = `
+                        <h2>Key: ${key}</h2>
+                        <p><strong>History Count:</strong> ${parsed.history?.length || 0}</p>
+                        <p><strong>Next Workout:</strong> ${parsed.nextWorkout || 'N/A'}</p>
+                        <p><strong>Last Workout Date:</strong> ${parsed.history?.[0]?.date || 'N/A'}</p>
+                        <details>
+                            <summary>Full Data (click to expand)</summary>
+                            <pre style="background: #f5f5f5; padding: 10px; overflow: auto; max-height: 400px;">${JSON.stringify(parsed, null, 2)}</pre>
+                        </details>
+                    `;
+                    output.appendChild(div);
+                } catch (e) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<p>Error parsing ${key}: ${e.message}</p>`;
+                    output.appendChild(div);
+                }
+            } else {
+                const div = document.createElement('div');
+                div.innerHTML = `<p>No data found for key: ${key}</p>`;
+                output.appendChild(div);
+            }
+        });
+        
+        if (output.children.length === 0) {
+            output.innerHTML = '<p>No data found in localStorage for either key.</p>';
+        }
+    </script>
+</body>
+</html>
