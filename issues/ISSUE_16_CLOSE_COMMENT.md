@@ -37,3 +37,4 @@ The fix ensures that:
 
 The app now correctly respects your schedule settings and workout frequency when calculating the next workout date! 🎯
 
+
