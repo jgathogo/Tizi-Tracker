@@ -61,11 +61,19 @@ const PROGRAMS = {
   'B': ['Squat', 'Overhead Press', 'Deadlift']
 };
 
+export type Theme = 'light' | 'dark';
+
 export default function App() {
   const [user, setUser] = useState<UserProfile>(INITIAL_STATE);
   const [activeTab, setActiveTab] = useState<'workout' | 'history' | 'progress'>('workout');
   const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(null);
   const [restTimerStart, setRestTimerStart] = useState(false);
+  
+  // Theme state
+  const [theme, setTheme] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem('tizi_tracker_theme') as Theme;
+    return savedTheme || 'dark'; // Default to dark
+  });
   
   // Modals
   const [warmupModal, setWarmupModal] = useState<{name: string, weight: number} | null>(null);
@@ -80,6 +88,139 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+
+  // Save theme to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('tizi_tracker_theme', theme);
+    // Apply theme class to document root and body for global styling
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+      document.documentElement.classList.remove('dark-theme');
+      document.body.classList.add('light-theme');
+      document.body.classList.remove('dark-theme');
+    } else {
+      document.documentElement.classList.add('dark-theme');
+      document.documentElement.classList.remove('light-theme');
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
+    }
+  }, [theme]);
+
+  // Apply theme on initial load
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('tizi_tracker_theme') as Theme;
+    const initialTheme = savedTheme || 'dark';
+    if (initialTheme === 'light') {
+      document.documentElement.classList.add('light-theme');
+      document.documentElement.classList.remove('dark-theme');
+      document.body.classList.add('light-theme');
+      document.body.classList.remove('dark-theme');
+    } else {
+      document.documentElement.classList.add('dark-theme');
+      document.documentElement.classList.remove('light-theme');
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
+    }
+  }, []);
+
+  // Helper function to get theme-aware classes
+  const getThemeClasses = (darkClasses: string, lightClasses: string) => {
+    return theme === 'dark' ? darkClasses : lightClasses;
+  };
+
+  // Helper function to recalculate currentWeights and nextWorkout from history if they seem incorrect
+  const recalculateWeightsFromHistory = (userData: UserProfile): UserProfile => {
+    // Only recalculate if we have history
+    if (!userData.history || userData.history.length === 0) {
+      return userData;
+    }
+
+    const completedWorkouts = userData.history
+      .filter(w => w.completed && (w.type === 'A' || w.type === 'B'))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (completedWorkouts.length === 0) {
+      return userData;
+    }
+
+    // Get the most recent workout
+    const mostRecentWorkout = completedWorkouts[0];
+
+    // Check if nextWorkout needs recalculation
+    // If the most recent workout was 'A', next should be 'B', and vice versa
+    let needsNextWorkoutRecalculation = false;
+    let recalculatedNextWorkout = userData.nextWorkout;
+    if (mostRecentWorkout.type === 'A' || mostRecentWorkout.type === 'B') {
+      const expectedNextWorkout = mostRecentWorkout.type === 'A' ? 'B' : 'A';
+      if (userData.nextWorkout !== expectedNextWorkout) {
+        needsNextWorkoutRecalculation = true;
+        recalculatedNextWorkout = expectedNextWorkout;
+        console.log(`🔧 Tizi Tracker: nextWorkout needs correction: ${userData.nextWorkout} -> ${expectedNextWorkout} (last workout was ${mostRecentWorkout.type})`);
+      }
+    }
+
+    // Check if any currentWeights are at initial values when they shouldn't be
+    const needsWeightsRecalculation = Object.keys(INITIAL_STATE.currentWeights).some(exName => {
+      const currentWeight = userData.currentWeights[exName];
+      const initialWeight = INITIAL_STATE.currentWeights[exName];
+      // If current weight is at or below initial value, check if history shows higher weights
+      if (currentWeight <= initialWeight) {
+        const hasHigherWeight = completedWorkouts.some(workout => {
+          const exercise = workout.exercises.find(ex => ex.name === exName);
+          return exercise && exercise.weight > initialWeight;
+        });
+        return hasHigherWeight;
+      }
+      return false;
+    });
+
+    // If nothing needs recalculation, return as-is
+    if (!needsNextWorkoutRecalculation && !needsWeightsRecalculation) {
+      return userData;
+    }
+
+    // Recalculate weights if needed
+    const recalculatedWeights = needsWeightsRecalculation ? { ...userData.currentWeights } : userData.currentWeights;
+    const recalculatedAttempts = needsWeightsRecalculation ? { ...(userData.exerciseAttempts || {}) } : (userData.exerciseAttempts || {});
+
+    if (needsWeightsRecalculation) {
+      console.log('🔧 Tizi Tracker: Recalculating currentWeights from history (detected incorrect values)...');
+      
+      // For each exercise in the most recent workout, calculate what the current weight should be
+      mostRecentWorkout.exercises.forEach(ex => {
+        const workoutWeight = ex.weight;
+        const allSetsDone = ex.sets.every(r => r === 5);
+        const workoutAttempt = ex.attempt || 1;
+        const repeatCount = userData.repeatCount?.[ex.name] ?? 2;
+
+        if (allSetsDone && workoutAttempt >= repeatCount) {
+          // Should have progressed after this workout
+          const defaultIncrement = ex.name === 'Deadlift' ? 5 : 2.5;
+          const increment = userData.weightIncrements?.[ex.name] ?? defaultIncrement;
+          recalculatedWeights[ex.name] = workoutWeight + increment;
+          recalculatedAttempts[ex.name] = 1;
+        } else if (allSetsDone) {
+          // Same weight, next attempt
+          recalculatedWeights[ex.name] = workoutWeight;
+          recalculatedAttempts[ex.name] = workoutAttempt + 1;
+        } else {
+          // Keep same weight (workout wasn't fully successful)
+          recalculatedWeights[ex.name] = workoutWeight;
+          recalculatedAttempts[ex.name] = workoutAttempt;
+        }
+      });
+
+      console.log('✅ Tizi Tracker: Recalculated weights from most recent workout:', recalculatedWeights);
+    }
+
+    // Return updated user data
+    return {
+      ...userData,
+      currentWeights: recalculatedWeights,
+      exerciseAttempts: recalculatedAttempts,
+      nextWorkout: recalculatedNextWorkout
+    };
+  };
 
   useEffect(() => {
     // Try new key first, fallback to old key for migration
@@ -99,16 +240,26 @@ export default function App() {
           };
           console.log('🔄 Tizi Tracker: Migrated global repeatCount to per-exercise format', loaded.repeatCount);
         }
-        setUser(loaded);
+        
+        // Recalculate weights from history if they seem incorrect
+        const correctedData = recalculateWeightsFromHistory(loaded);
+        setUser(correctedData);
+        
+        // Save corrected data back to localStorage if it was corrected
+        if (correctedData !== loaded) {
+          localStorage.setItem('tizi_tracker_data', JSON.stringify(correctedData));
+          console.log('💾 Tizi Tracker: Saved corrected weights to localStorage');
+        }
+        
         // Migrate to new key if using old key
         if (localStorage.getItem('powerlifts_data') && !localStorage.getItem('tizi_tracker_data')) {
           localStorage.setItem('tizi_tracker_data', saved);
           localStorage.removeItem('powerlifts_data');
         }
         console.log('✅ Tizi Tracker: Data loaded successfully', {
-          historyCount: loaded.history?.length || 0,
-          nextWorkout: loaded.nextWorkout,
-          exercises: Object.keys(loaded.currentWeights || {})
+          historyCount: correctedData.history?.length || 0,
+          nextWorkout: correctedData.nextWorkout,
+          exercises: Object.keys(correctedData.currentWeights || {})
         });
         // Prompt for name if missing (new users only)
         if (!loaded.name && (!loaded.history || loaded.history.length === 0)) {
@@ -625,10 +776,45 @@ export default function App() {
     
     // Get exercises for next workout
     const nextExercises = PROGRAMS[user.nextWorkout] || [];
-    const nextWorkoutPreview = nextExercises.map(name => ({
-      name,
-      weight: user.currentWeights[name] || 0
-    }));
+    
+    // Calculate next workout preview with smart fallback
+    const nextWorkoutPreview = nextExercises.map(name => {
+      let weight = user.currentWeights[name] || 0;
+      
+      // If weight is suspiciously low (default initial value) and we have history,
+      // try to calculate from the most recent workout
+      const defaultInitialWeight = INITIAL_STATE.currentWeights[name] || 20;
+      if (weight <= defaultInitialWeight && recentWorkout) {
+        // Find this exercise in the most recent workout
+        const recentExercise = recentWorkout.exercises.find(ex => ex.name === name);
+        if (recentExercise) {
+          const recentWeight = recentExercise.weight;
+          // Check if the recent workout was successful (all sets completed)
+          const allSetsDone = recentExercise.sets.every(r => r === 5);
+          if (allSetsDone) {
+            // Calculate what the next weight should be based on progression logic
+            const currentAttempt = recentExercise.attempt || 1;
+            const repeatCount = user.repeatCount?.[name] ?? 2;
+            
+            if (currentAttempt >= repeatCount) {
+              // Should have progressed - calculate next weight
+              const defaultIncrement = name === 'Deadlift' ? 5 : 2.5;
+              const increment = user.weightIncrements?.[name] ?? defaultIncrement;
+              weight = recentWeight + increment;
+              console.log(`🔧 Tizi Tracker: Calculated next weight for ${name} from history: ${weight}${user.unit} (was ${recentWeight}${user.unit} + ${increment}${user.unit})`);
+            } else {
+              // Same weight, next attempt
+              weight = recentWeight;
+            }
+          } else {
+            // Workout wasn't fully successful, keep same weight
+            weight = recentWeight;
+          }
+        }
+      }
+      
+      return { name, weight };
+    });
 
     return (
     <div className="flex flex-col h-full max-w-2xl mx-auto p-4 pt-8">
@@ -636,8 +822,12 @@ export default function App() {
            <div className="flex items-center gap-3">
                <Logo size={48} className="flex-shrink-0" />
                <div>
-                   <h1 className="text-3xl font-bold text-white mb-2">{APP_NAME}</h1>
-                   <p className="text-slate-400">Log your progress, whatever the activity.</p>
+                   <h1 className={`text-3xl font-bold mb-2 ${
+                     theme === 'dark' ? 'text-white' : 'text-slate-900'
+                   }`}>{APP_NAME}</h1>
+                   <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>
+                     Log your progress, whatever the activity.
+                   </p>
                </div>
            </div>
            <div className="flex gap-2">
@@ -656,7 +846,11 @@ export default function App() {
                </button>
                <button 
                  onClick={() => setSettingsOpen(true)}
-                 className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-colors"
+                 className={`p-2 rounded-xl border transition-colors ${
+                   theme === 'dark'
+                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'
+                     : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-300'
+                 }`}
                >
                    <Settings size={20} />
                </button>
@@ -695,29 +889,43 @@ export default function App() {
 
        {/* Recent Workout Card */}
        {recentWorkout && (
-         <div className="bg-slate-800 rounded-2xl p-5 border border-slate-700 mb-4">
+         <div className={`rounded-2xl p-5 border mb-4 ${
+           theme === 'dark'
+             ? 'bg-slate-800 border-slate-700'
+             : 'bg-white border-slate-300'
+         }`}>
            <div className="flex items-center gap-2 mb-3">
-             <HistoryIcon size={16} className="text-slate-400" />
-             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+             <HistoryIcon size={16} className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} />
+             <h3 className={`text-sm font-bold uppercase tracking-wider ${
+               theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+             }`}>
                {getRelativeDateLabel(recentWorkout.date)}
              </h3>
            </div>
            <div className="flex items-center justify-between mb-2">
-             <span className="text-lg font-bold text-white">
+             <span className={`text-lg font-bold ${
+               theme === 'dark' ? 'text-white' : 'text-slate-900'
+             }`}>
                {recentWorkout.customName || `Workout ${recentWorkout.type}`}
              </span>
-             <span className="text-xs text-slate-400">
+             <span className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
                {new Date(recentWorkout.date).toLocaleDateString()}
              </span>
            </div>
            <div className="flex flex-wrap gap-2 mt-3">
              {recentWorkout.exercises.slice(0, 3).map((ex, idx) => (
-               <span key={idx} className="text-sm text-slate-300 bg-slate-700/50 px-3 py-1 rounded-lg">
+               <span key={idx} className={`text-sm px-3 py-1 rounded-lg ${
+                 theme === 'dark'
+                   ? 'text-slate-300 bg-slate-700/50'
+                   : 'text-slate-700 bg-slate-100'
+               }`}>
                  {ex.name} {ex.weight}{user.unit}
                </span>
              ))}
              {recentWorkout.exercises.length > 3 && (
-               <span className="text-sm text-slate-500">+{recentWorkout.exercises.length - 3} more</span>
+               <span className={theme === 'dark' ? 'text-sm text-slate-500' : 'text-sm text-slate-500'}>
+                 +{recentWorkout.exercises.length - 3} more
+               </span>
              )}
            </div>
          </div>
@@ -787,25 +995,45 @@ export default function App() {
        </div>
 
        {/* Activity Hub */}
-       <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 px-1">Other Activities</h3>
+       <h3 className={`text-sm font-bold uppercase tracking-widest mb-4 px-1 ${
+         theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
+       }`}>Other Activities</h3>
        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            <button 
              onClick={() => startWorkout('Custom')}
-             className="flex items-center gap-4 p-5 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all text-left group"
+             className={`flex items-center gap-4 p-5 rounded-2xl border transition-all text-left group ${
+               theme === 'dark'
+                 ? 'bg-slate-800 hover:bg-slate-700 border-slate-700'
+                 : 'bg-white hover:bg-slate-50 border-slate-300'
+             }`}
            >
                 <div className="p-3 bg-orange-500/20 text-orange-400 rounded-xl group-hover:bg-orange-500 group-hover:text-white transition-all">
                     <Activity size={24} />
                 </div>
                 <div>
-                    <div className="font-bold text-white">Custom Activity</div>
-                    <div className="text-xs text-slate-500">Log skipping, cardio, etc.</div>
+                    <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      Custom Activity
+                    </div>
+                    <div className={theme === 'dark' ? 'text-xs text-slate-500' : 'text-xs text-slate-600'}>
+                      Log skipping, cardio, etc.
+                    </div>
                 </div>
            </button>
            
-           <div className="p-5 bg-slate-800/40 rounded-2xl border border-slate-700/50 flex flex-col justify-center">
-                <div className="text-slate-500 text-xs mb-1">Total History</div>
-                <div className="text-2xl font-bold text-white flex items-center gap-2">
-                    {user.history.length} <span className="text-sm font-normal text-slate-500">entries</span>
+           <div className={`p-5 rounded-2xl border flex flex-col justify-center ${
+             theme === 'dark'
+               ? 'bg-slate-800/40 border-slate-700/50'
+               : 'bg-slate-50 border-slate-300/50'
+           }`}>
+                <div className={theme === 'dark' ? 'text-slate-500 text-xs mb-1' : 'text-slate-600 text-xs mb-1'}>
+                  Total History
+                </div>
+                <div className={`text-2xl font-bold flex items-center gap-2 ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
+                    {user.history.length} <span className={`text-sm font-normal ${
+                      theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
+                    }`}>entries</span>
                 </div>
            </div>
        </div>
@@ -819,10 +1047,14 @@ export default function App() {
         <div className="max-w-2xl mx-auto p-4 pb-32">
              <div className="flex justify-between items-center mb-6">
                  <div>
-                     <h2 className="text-2xl font-bold text-white">
+                     <h2 className={`text-2xl font-bold ${
+                       theme === 'dark' ? 'text-white' : 'text-slate-900'
+                     }`}>
                          {activeSession.customName ? activeSession.customName : `Workout ${activeSession.type}`}
                      </h2>
-                     <div className="text-slate-400 text-sm">{new Date(activeSession.startTime).toLocaleTimeString()}</div>
+                     <div className={theme === 'dark' ? 'text-slate-400 text-sm' : 'text-slate-600 text-sm'}>
+                       {new Date(activeSession.startTime).toLocaleTimeString()}
+                     </div>
                  </div>
                  <button 
                     onClick={cancelWorkout} 
@@ -856,9 +1088,15 @@ export default function App() {
              </div>
 
             <div className="mt-8">
-                <label className="block text-slate-400 text-sm mb-2 font-medium">Session Notes</label>
+                <label className={`block text-sm mb-2 font-medium ${
+                  theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                }`}>Session Notes</label>
                 <textarea 
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className={`w-full border rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      theme === 'dark'
+                        ? 'bg-slate-800 border-slate-700 text-white'
+                        : 'bg-white border-slate-300 text-slate-900'
+                    }`}
                     rows={3}
                     placeholder="How did it feel?"
                     value={activeSession.notes}
@@ -866,7 +1104,11 @@ export default function App() {
                 />
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur border-t border-slate-800 flex justify-center z-40">
+            <div className={`fixed bottom-0 left-0 right-0 p-4 backdrop-blur border-t flex justify-center z-40 ${
+              theme === 'dark'
+                ? 'bg-slate-900/90 border-slate-800'
+                : 'bg-white/90 border-slate-300'
+            }`}>
                 <button 
                     onClick={finishWorkout}
                     className="w-full max-w-md bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all"
@@ -879,28 +1121,54 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-blue-500/30">
+    <div className={`min-h-screen font-sans selection:bg-blue-500/30 ${
+      theme === 'dark' 
+        ? 'bg-slate-900 text-slate-200' 
+        : 'bg-slate-50 text-slate-900'
+    }`}>
       
       {!activeSession && (
-          <div className="fixed bottom-0 w-full bg-slate-800/80 backdrop-blur-md border-t border-slate-700 z-50">
+          <div className={`fixed bottom-0 w-full backdrop-blur-md border-t z-50 ${
+            theme === 'dark' 
+              ? 'bg-slate-800/80 border-slate-700' 
+              : 'bg-white/90 border-slate-300'
+          }`}>
               <div className="flex justify-around max-w-md mx-auto">
                   <button 
                     onClick={() => setActiveTab('workout')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${activeTab === 'workout' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
+                      activeTab === 'workout' 
+                        ? 'text-blue-400' 
+                        : theme === 'dark' 
+                          ? 'text-slate-500 hover:text-slate-300' 
+                          : 'text-slate-400 hover:text-slate-600'
+                    }`}
                   >
                       <LayoutDashboard size={20} />
                       <span className="text-[10px] font-bold uppercase tracking-tighter">Dash</span>
                   </button>
                   <button 
                     onClick={() => setActiveTab('history')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${activeTab === 'history' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
+                      activeTab === 'history' 
+                        ? 'text-blue-400' 
+                        : theme === 'dark' 
+                          ? 'text-slate-500 hover:text-slate-300' 
+                          : 'text-slate-400 hover:text-slate-600'
+                    }`}
                   >
                       <HistoryIcon size={20} />
                       <span className="text-[10px] font-bold uppercase tracking-tighter">History</span>
                   </button>
                   <button 
                     onClick={() => setActiveTab('progress')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${activeTab === 'progress' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
+                      activeTab === 'progress' 
+                        ? 'text-blue-400' 
+                        : theme === 'dark' 
+                          ? 'text-slate-500 hover:text-slate-300' 
+                          : 'text-slate-400 hover:text-slate-600'
+                    }`}
                   >
                       <LineChart size={20} />
                       <span className="text-[10px] font-bold uppercase tracking-tighter">Trends</span>
@@ -916,19 +1184,41 @@ export default function App() {
                 {activeTab === 'history' && (
                     <div className="max-w-2xl mx-auto p-4 pt-8">
                         <header className="mb-6 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-white">Activity Log</h2>
-                            <button onClick={() => setSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Settings size={18} /></button>
+                            <h2 className={`text-2xl font-bold ${
+                              theme === 'dark' ? 'text-white' : 'text-slate-900'
+                            }`}>Activity Log</h2>
+                            <button 
+                              onClick={() => setSettingsOpen(true)} 
+                              className={`p-2 transition-colors ${
+                                theme === 'dark'
+                                  ? 'text-slate-400 hover:text-white'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <Settings size={18} />
+                            </button>
                         </header>
-                        <History history={user.history} unit={user.unit} onDelete={deleteWorkout} />
+                        <History history={user.history} unit={user.unit} onDelete={deleteWorkout} theme={theme} />
                     </div>
                 )}
                 {activeTab === 'progress' && (
                     <div className="max-w-2xl mx-auto p-4 pt-8">
                         <header className="mb-6 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-white">Trends</h2>
-                            <button onClick={() => setSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Settings size={18} /></button>
+                            <h2 className={`text-2xl font-bold ${
+                              theme === 'dark' ? 'text-white' : 'text-slate-900'
+                            }`}>Trends</h2>
+                            <button 
+                              onClick={() => setSettingsOpen(true)} 
+                              className={`p-2 transition-colors ${
+                                theme === 'dark'
+                                  ? 'text-slate-400 hover:text-white'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <Settings size={18} />
+                            </button>
                         </header>
-                        <Progress history={user.history} />
+                        <Progress history={user.history} theme={theme} />
                     </div>
                 )}
               </>
@@ -959,6 +1249,8 @@ export default function App() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         user={user}
+        theme={theme}
+        onThemeChange={setTheme}
         onImport={(data) => setUser(data)}
         onReset={async () => {
           if (window.confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {

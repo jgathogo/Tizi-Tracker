@@ -1,12 +1,14 @@
 import React from 'react';
 import { UserProfile, ExerciseName } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import type { Theme } from '../App';
 
 interface ProgressProps {
   history: UserProfile['history'];
+  theme?: Theme;
 }
 
-export const Progress: React.FC<ProgressProps> = ({ history }) => {
+export const Progress: React.FC<ProgressProps> = ({ history, theme = 'dark' }) => {
   // Transform history into chart data
   // Structure: { date: '2023-01-01', Squat: 100, Bench: 80, ... }
   
@@ -31,21 +33,42 @@ export const Progress: React.FC<ProgressProps> = ({ history }) => {
   };
 
   return (
-    <div className="h-[500px] w-full p-4 bg-slate-800 rounded-2xl border border-slate-700">
-      <h3 className="text-lg font-bold text-white mb-4">Strength Progression</h3>
+    <div className={`h-[500px] w-full p-4 rounded-2xl border ${
+      theme === 'dark'
+        ? 'bg-slate-800 border-slate-700'
+        : 'bg-white border-slate-300'
+    }`}>
+      <h3 className={`text-lg font-bold mb-4 ${
+        theme === 'dark' ? 'text-white' : 'text-slate-900'
+      }`}>Strength Progression</h3>
       {sortedData.length < 2 ? (
-          <div className="h-full flex items-center justify-center text-slate-500">
+          <div className={`h-full flex items-center justify-center ${
+            theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
+          }`}>
               Not enough data to display chart. Complete more workouts!
           </div>
       ) : (
         <ResponsiveContainer width="100%" height="90%">
             <LineChart data={sortedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickMargin={10} />
-            <YAxis stroke="#94a3b8" fontSize={12} domain={['dataMin - 10', 'auto']} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#334155' : '#cbd5e1'} />
+            <XAxis 
+              dataKey="date" 
+              stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} 
+              fontSize={12} 
+              tickMargin={10} 
+            />
+            <YAxis 
+              stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} 
+              fontSize={12} 
+              domain={['dataMin - 10', 'auto']} 
+            />
             <Tooltip 
-                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#f8fafc' }}
-                itemStyle={{ color: '#cbd5e1' }}
+                contentStyle={{ 
+                  backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+                  borderColor: theme === 'dark' ? '#475569' : '#cbd5e1',
+                  color: theme === 'dark' ? '#f8fafc' : '#1e293b'
+                }}
+                itemStyle={{ color: theme === 'dark' ? '#cbd5e1' : '#475569' }}
             />
             <Legend />
             {(Object.keys(colors) as ExerciseName[]).map(ex => (

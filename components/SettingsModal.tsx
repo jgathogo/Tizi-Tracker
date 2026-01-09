@@ -1,14 +1,17 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2, Sun, Moon } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { isAuthAvailable } from '../services/authService';
 import { isSyncAvailable, saveToCloud } from '../services/syncService';
+import type { Theme } from '../App';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserProfile;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
   onImport: (data: UserProfile) => void;
   onReset: () => Promise<void>;
   onUpdate: (data: UserProfile) => void;
@@ -23,6 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, 
   onClose, 
   user, 
+  theme,
+  onThemeChange,
   onImport, 
   onReset, 
   onUpdate,
@@ -112,13 +117,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4 backdrop-blur-sm">
-      <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 flex-shrink-0">
-          <div className="flex items-center gap-2 text-white">
+      <div className={`rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border overflow-hidden ${
+        theme === 'dark'
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-300'
+      }`}>
+        <div className={`p-4 border-b flex justify-between items-center flex-shrink-0 ${
+          theme === 'dark'
+            ? 'border-slate-700 bg-slate-900/50'
+            : 'border-slate-300 bg-slate-50'
+        }`}>
+          <div className={`flex items-center gap-2 ${
+            theme === 'dark' ? 'text-white' : 'text-slate-900'
+          }`}>
              <Settings size={20} />
              <h3 className="text-lg font-bold">Data & Settings</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button 
+            onClick={onClose} 
+            className={`transition-colors ${
+              theme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
             <X size={24} />
           </button>
         </div>
@@ -127,27 +147,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           
           {/* Export Section */}
           <div className="space-y-2">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Backup</h4>
+            <h4 className={`text-sm font-bold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+            }`}>Backup</h4>
             <button 
                 onClick={handleExport}
-                className="w-full flex items-center justify-between p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl border border-slate-600 transition-all group"
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
+                  theme === 'dark'
+                    ? 'bg-slate-700/50 hover:bg-slate-700 border-slate-600'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300'
+                }`}
             >
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-colors">
                         <Download size={20} />
                     </div>
                     <div className="text-left">
-                        <div className="font-bold text-white">Export Data</div>
-                        <div className="text-xs text-slate-400">Download JSON backup</div>
+                        <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                          Export Data
+                        </div>
+                        <div className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
+                          Download JSON backup
+                        </div>
                     </div>
                 </div>
-                <FileJson size={18} className="text-slate-500" />
+                <FileJson size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
             </button>
           </div>
 
           {/* Import Section */}
           <div className="space-y-2">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Restore</h4>
+            <h4 className={`text-sm font-bold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+            }`}>Restore</h4>
             <input 
                 type="file" 
                 ref={fileInputRef}
@@ -157,28 +189,78 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
             <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-between p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl border border-slate-600 transition-all group"
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
+                  theme === 'dark'
+                    ? 'bg-slate-700/50 hover:bg-slate-700 border-slate-600'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300'
+                }`}
             >
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                         <Upload size={20} />
                     </div>
                     <div className="text-left">
-                        <div className="font-bold text-white">Import Data</div>
-                        <div className="text-xs text-slate-400">Restore from JSON file</div>
+                        <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                          Import Data
+                        </div>
+                        <div className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
+                          Restore from JSON file
+                        </div>
                     </div>
                 </div>
-                <FileJson size={18} className="text-slate-500" />
+                <FileJson size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
             </button>
             {error && <div className="text-red-400 text-xs px-2">{error}</div>}
           </div>
 
-          <hr className="border-slate-700" />
+          <hr className={theme === 'dark' ? 'border-slate-700' : 'border-slate-300'} />
+
+          {/* Theme Toggle Section */}
+          <div className="space-y-3">
+            <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
+              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+            }`}>
+              {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />} Appearance
+            </h4>
+            
+            <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+              <div>
+                <div className={`text-sm font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
+                  {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </div>
+                <div className={`text-xs ${
+                  theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                }`}>
+                  {theme === 'dark' 
+                    ? 'Better for low-light environments and battery life'
+                    : 'Better for bright environments and readability'}
+                </div>
+              </div>
+              <button
+                onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  theme === 'dark' ? 'bg-blue-600' : 'bg-orange-500'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    theme === 'dark' ? 'left-1' : 'right-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <hr className={theme === 'dark' ? 'border-slate-700' : 'border-slate-300'} />
 
           {/* Profile Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
+                theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+              }`}>
                 <User size={14} /> Profile
               </h4>
               {!user.name && (
