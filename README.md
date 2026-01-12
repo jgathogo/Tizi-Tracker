@@ -7,6 +7,7 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 ### 🏋️ 5x5 Strength Hub
 - **Workout A/B Alternation**: Automatically tracks and alternates between Workout A (Squat, Bench Press, Barbell Row) and Workout B (Squat, Overhead Press, Deadlift)
 - **Progressive Overload**: Automatic weight progression based on successful sets
+- **Smart Failure Handling**: Automatic deload after consecutive failures to prevent plateaus
 - **Per-Exercise Settings**: Customize how many times to repeat each exercise at a weight before progressing
 - **Custom Weight Increments**: Set different weight increments per exercise (e.g., 2.5kg for Squat, 5kg for Deadlift)
 - **Attempt Tracking**: See which attempt you're on at each weight (1st, 2nd, 3rd time, etc.)
@@ -23,9 +24,20 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 
 ### 🛠️ Advanced Tools
 - **Rest Timer**: Built-in timer to track rest periods between sets
+  - Dockable mode for non-intrusive tracking
+  - Interval alerts (beep every 30 seconds)
+  - Audible alerts (bell sound when timer completes)
+  - Pause/Resume functionality
+  - Customizable duration per workout type
 - **Warmup Calculator**: Automatic warmup calculations with plate breakdown
+  - Per-session state tracking (warmup sets persist per workout)
+  - Visual completion indicators
 - **Weight Micro-Adjustments**: Fine-tune weights with small increments (+/- 1.25kg, 2.5kg, 5kg, etc.)
 - **Manual Weight Editing**: Adjust weights and attempt numbers manually anytime
+- **Smart Failure Logic**: Automatic deload after consecutive failures
+  - Tracks consecutive failures per exercise
+  - Auto-deloads when threshold is reached
+  - Prevents plateaus and helps break through sticking points
 
 ### 📊 Analytics & Progress
 - **Progress Charts**: Visual trends showing strength progression over time using Recharts
@@ -39,6 +51,10 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 - **Workout Schedule**: Configure workout frequency (1-7 per week), preferred days, and flexible scheduling
 - **Next Workout Date**: Automatic calculation of next workout date based on your schedule and rest requirements
 - **Personalized Messages**: Congratulations and encouragement personalized with your name
+- **Theme Customization**: Choose from 30+ beautiful themes (Dark, Light, Cupcake, Garden, Cyberpunk, and more)
+  - Instant theme switching
+  - All themes fully supported with proper contrast
+  - Theme preferences saved automatically
 
 ### 💾 Data Management
 - **Automatic Saving**: All data stored locally in browser localStorage
@@ -49,14 +65,27 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
   - Works offline - syncs when connection restored
   - Cross-device access to your data
 
+### 🎨 User Experience
+- **Navigation During Workouts**: Access Settings and navigate between tabs without losing workout progress
+  - Settings button in active workout header
+  - Persistent bottom navigation bar
+  - Workout state preserved when switching tabs
+  - Visual indicator shows active workout status
+- **Theme-Aware UI**: All components adapt to selected theme with proper contrast
+  - Semantic color classes for consistent theming
+  - Accessible color combinations
+  - Smooth theme transitions
+
 ## Tech Stack
 
 - React 19 + TypeScript
-- Tailwind CSS
+- Tailwind CSS 3 + DaisyUI 4 (30+ themes)
 - Lucide React Icons
 - Recharts Visualization
 - Google GenAI (Gemini API)
 - Firebase (Authentication & Cloud Firestore) - Optional cloud sync
+- Vitest (Testing framework)
+- Web Audio API (Audible alerts)
 
 ## Data Persistence
 
@@ -99,6 +128,21 @@ npm run dev
 ```
 
 Visit `http://localhost:3000` in your browser.
+
+### Development
+
+```bash
+# Run tests
+npm test              # Watch mode
+npm run test:run      # One-time run
+npm run test:coverage # With coverage
+npm run test:ui       # Visual test interface
+
+# Build for production
+npm run build
+```
+
+**Pre-commit Hook**: Tests run automatically before each commit to ensure code quality.
 
 ### Deploy to Your Phone
 
@@ -155,4 +199,13 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 > 
 > **Cloud Sync (Optional):** Firebase authentication (Google Sign-In or Email/Password), automatic sync when online, works offline, cross-device access, reset data syncs immediately.
 > 
-> **UI:** Dark slate and blue theme with high-quality rounded corners and smooth transitions. Mobile-responsive design. Settings modal with scrollable sections. Workout completion modal with personalized congratulations."
+> **UI:** DaisyUI theme system with 30+ themes (Dark, Light, Cupcake, Garden, Cyberpunk, etc.). High-quality rounded corners and smooth transitions. Mobile-responsive design. Settings modal with scrollable sections. Workout completion modal with personalized congratulations. Navigation accessible during active workouts. Theme-aware components with proper contrast.
+> 
+> **Testing:** Comprehensive test suite with Vitest. Pre-commit hooks ensure code quality. 144+ tests covering utilities, components, and integration flows.
+> 
+> **Recent Enhancements:**
+> - Rest timer with dockable mode, interval alerts, and audible notifications
+> - Smart failure logic with automatic deload
+> - Navigation and Settings access during active workouts
+> - Per-session warmup state tracking
+> - Full DaisyUI theme integration with 30+ themes"
