@@ -1,4 +1,5 @@
 import { WorkoutSessionData, WorkoutSchedule } from '../types';
+import { getAdaptiveNextWorkoutDate } from './scheduleUtils';
 
 /**
  * Calculates estimated calories burned during a workout.
@@ -43,12 +44,24 @@ export const calculateCalories = (workout: WorkoutSessionData, unit: 'kg' | 'lb'
  * - Schedule frequency (workouts per week)
  * - Preferred days
  * - Minimum rest days between workouts
+ * - Actual workout patterns (adaptive)
  * 
  * @param schedule - Optional workout schedule settings
  * @param lastWorkoutDate - Optional date of the last completed workout
+ * @param history - Optional array of workout history for pattern analysis
  * @returns The next workout date
  */
-export const getNextWorkoutDate = (schedule?: WorkoutSchedule, lastWorkoutDate?: Date): Date => {
+export const getNextWorkoutDate = (
+  schedule?: WorkoutSchedule, 
+  lastWorkoutDate?: Date,
+  history?: WorkoutSessionData[]
+): Date => {
+  // Use adaptive calculation if history is provided
+  if (history && history.length > 0) {
+    return getAdaptiveNextWorkoutDate(schedule, lastWorkoutDate, history);
+  }
+  
+  // Fall back to original calculation
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Normalize to midnight
   const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.

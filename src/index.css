@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure body and html have proper background colors */
+html, body {
+  @apply bg-base-100 text-base-content;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  @apply bg-base-100;
+}
+
+/* Custom scrollbar styling - will adapt to theme via DaisyUI CSS variables */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(var(--b2));
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--b3));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--bc));
+  opacity: 0.3;
+}

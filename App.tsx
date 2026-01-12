@@ -3,6 +3,7 @@ import { UserProfile, ExerciseSession, WorkoutSessionData, FormGuideData, Workou
 import { getExerciseFormGuide } from './services/geminiService';
 import { ExerciseCard } from './components/ExerciseCard';
 import { RestTimer } from './components/RestTimer';
+import { WorkoutTimer } from './components/WorkoutTimer';
 import { History } from './components/History';
 import { Progress } from './components/Progress';
 import { WarmupCalculator } from './components/WarmupCalculator';
@@ -14,6 +15,11 @@ import { Logo } from './components/Logo';
 import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle } from 'lucide-react';
 import { getWeightPerSide } from './utils/plateCalculator';
 import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSinceLastBackup } from './utils/backup';
+import { calculateRestDuration } from './utils/restTimerUtils';
+import { getNextWorkoutDate } from './utils/workoutUtils';
+import { analyzeWorkoutPattern } from './utils/scheduleUtils';
+import { calculateProgression } from './utils/progressionUtils';
+import { applyTheme, getStoredTheme, initializeTheme, type Theme } from './utils/themeColors';
 import { AuthModal } from './components/AuthModal';
 import { onAuthStateChange, getCurrentUser, signOut, isAuthAvailable } from './services/authService';
 import { saveToCloud, loadFromCloud, mergeData, isSyncAvailable } from './services/syncService';
@@ -40,6 +46,7 @@ const INITIAL_STATE: UserProfile = {
     flexible: true
   },
   exerciseAttempts: {}, // Track attempt number per exercise at current weight
+  consecutiveFailures: {}, // Track consecutive failures per exercise
   repeatCount: {
     'Squat': 2,
     'Bench Press': 2,
@@ -61,19 +68,32 @@ const PROGRAMS = {
   'B': ['Squat', 'Overhead Press', 'Deadlift']
 };
 
-export type Theme = 'light' | 'dark';
-
 export default function App() {
   const [user, setUser] = useState<UserProfile>(INITIAL_STATE);
   const [activeTab, setActiveTab] = useState<'workout' | 'history' | 'progress'>('workout');
   const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(null);
-  const [restTimerStart, setRestTimerStart] = useState(false);
   
-  // Theme state
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('tizi_tracker_theme') as Theme;
-    return savedTheme || 'dark'; // Default to dark
+  // Rest timer state - supports dynamic duration and type
+  const [restTimerConfig, setRestTimerConfig] = useState<{
+    duration: number;
+    autoStart: boolean;
+    type: 'warmup' | 'working-set';
+  }>({
+    duration: 90,
+    autoStart: false,
+    type: 'working-set'
   });
+  
+  // Theme state - using DaisyUI theme system
+  const [theme, setTheme] = useState<Theme>(() => {
+    return getStoredTheme();
+  });
+  
+  // Handle theme change
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
   
   // Modals
   const [warmupModal, setWarmupModal] = useState<{name: string, weight: number} | null>(null);
@@ -89,44 +109,9 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
-  // Save theme to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('tizi_tracker_theme', theme);
-    // Apply theme class to document root and body for global styling
-    if (theme === 'light') {
-      document.documentElement.classList.add('light-theme');
-      document.documentElement.classList.remove('dark-theme');
-      document.body.classList.add('light-theme');
-      document.body.classList.remove('dark-theme');
-    } else {
-      document.documentElement.classList.add('dark-theme');
-      document.documentElement.classList.remove('light-theme');
-      document.body.classList.add('dark-theme');
-      document.body.classList.remove('light-theme');
-    }
-  }, [theme]);
-
-  // Apply theme on initial load
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('tizi_tracker_theme') as Theme;
-    const initialTheme = savedTheme || 'dark';
-    if (initialTheme === 'light') {
-      document.documentElement.classList.add('light-theme');
-      document.documentElement.classList.remove('dark-theme');
-      document.body.classList.add('light-theme');
-      document.body.classList.remove('dark-theme');
-    } else {
-      document.documentElement.classList.add('dark-theme');
-      document.documentElement.classList.remove('light-theme');
-      document.body.classList.add('dark-theme');
-      document.body.classList.remove('light-theme');
-    }
-  }, []);
-
-  // Helper function to get theme-aware classes
-  const getThemeClasses = (darkClasses: string, lightClasses: string) => {
-    return theme === 'dark' ? darkClasses : lightClasses;
-  };
+  // Check if theme is a dark variant for chart styling
+  // DaisyUI themes that are dark-based
+  const isDarkTheme = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'night', 'coffee', 'business'].includes(theme);
 
   // Helper function to recalculate currentWeights and nextWorkout from history if they seem incorrect
   const recalculateWeightsFromHistory = (userData: UserProfile): UserProfile => {
@@ -437,12 +422,47 @@ export default function App() {
     const updatedExercises = [...activeSession.exercises];
     updatedExercises[exerciseIndex].sets[setIndex] = reps;
     
-    if (reps > 0) {
-        setRestTimerStart(true);
-        setTimeout(() => setRestTimerStart(false), 100);
+    // Dynamic rest timer duration based on performance
+    if (reps >= 0) {
+      const duration = calculateRestDuration(reps);
+      setRestTimerConfig({
+        duration,
+        autoStart: true,
+        type: 'working-set'
+      });
+      // Reset autoStart after a brief moment to allow timer to detect the change
+      setTimeout(() => {
+        setRestTimerConfig(prev => ({ ...prev, autoStart: false }));
+      }, 100);
     }
 
     setActiveSession({ ...activeSession, exercises: updatedExercises });
+  };
+  
+  // Callback for warmup completion - triggers shorter rest timer
+  const handleWarmupComplete = () => {
+    setRestTimerConfig({
+      duration: 45, // 45 seconds for warmups (middle of 30-60s range)
+      autoStart: true,
+      type: 'warmup'
+    });
+    // Reset autoStart after a brief moment
+    setTimeout(() => {
+      setRestTimerConfig(prev => ({ ...prev, autoStart: false }));
+    }, 100);
+  };
+
+  // Callback for starting rest timer from warmup guidelines
+  const handleStartRestTimer = (duration: number) => {
+    setRestTimerConfig({
+      duration,
+      autoStart: true,
+      type: 'warmup'
+    });
+    // Reset autoStart after a brief moment
+    setTimeout(() => {
+      setRestTimerConfig(prev => ({ ...prev, autoStart: false }));
+    }, 100);
   };
 
   const updateExerciseWeight = (newWeight: number) => {
@@ -490,88 +510,115 @@ export default function App() {
       }
   };
 
+  /**
+   * Completes the current workout session and updates user state.
+   * 
+   * Updates:
+   * - currentWeights: Progresses weights based on workout completion
+   * - exerciseAttempts: Tracks attempt numbers for progression
+   * - consecutiveFailures: Tracks failure streaks for auto-deload
+   * - history: Adds completed workout to history
+   * - nextWorkout: Alternates between A and B
+   * 
+   * Important: Uses functional setState (setUser(prev => {...})) to avoid stale closure issues.
+   * This ensures we always work with the latest state, preventing bugs where weights reset
+   * to default values when the user state from the closure is outdated.
+   * 
+   * See issue #28 for details on the stale closure bug that was fixed.
+   */
   const finishWorkout = () => {
     if (!activeSession) return;
 
-    const newWeights = { ...user.currentWeights };
-    const newAttempts = { ...(user.exerciseAttempts || {}) };
     const completedExercises = activeSession.exercises;
-
-    // Only progress if it was a standard 5x5 workout
-    if (activeSession.type === 'A' || activeSession.type === 'B') {
-        completedExercises.forEach(ex => {
-            const currentWeight = ex.weight;
-            const currentAttempt = ex.attempt || 1;
-            const allSetsDone = ex.sets.every(r => r === 5);
-            // Get per-exercise repeat count, fallback to 2 if not set
-            const repeatCount = user.repeatCount?.[ex.name] ?? 2;
-            
-            if (allSetsDone) {
-                // Check if we've completed the required number of attempts
-                if (currentAttempt >= repeatCount) {
-                    // Progress to next weight and reset attempt counter
-                    // Use user-defined increment, fallback to defaults (2.5kg for most, 5kg for Deadlift)
-                    const defaultIncrement = ex.name === 'Deadlift' ? 5 : 2.5;
-                    const increment = user.weightIncrements?.[ex.name] ?? defaultIncrement;
-                    const nextWeight = currentWeight + increment;
-                    newWeights[ex.name] = nextWeight;
-                    newAttempts[ex.name] = 1; // Reset to 1st attempt at new weight
-                    console.log(`📈 Tizi Tracker: ${ex.name} progressed to ${nextWeight}${user.unit} (attempt 1)`);
-                } else {
-                    // Same weight, increment attempt counter
-                    newWeights[ex.name] = currentWeight;
-                    newAttempts[ex.name] = currentAttempt + 1;
-                    console.log(`🔄 Tizi Tracker: ${ex.name} at ${currentWeight}${user.unit} (attempt ${currentAttempt + 1}/${repeatCount})`);
-                }
-            } else {
-                // Sets not all completed, keep same weight and attempt
-                newWeights[ex.name] = currentWeight;
-                newAttempts[ex.name] = currentAttempt;
-            }
-        });
-    }
-
     const completedSession = {
         ...activeSession,
         endTime: Date.now(),
         completed: true
     };
 
-    const nextWorkout = activeSession.type === 'A' ? 'B' : activeSession.type === 'B' ? 'A' : user.nextWorkout;
+    // Use functional setState to avoid stale closure issues
+    // This ensures we always use the latest state, not a stale closure value
+    setUser(prev => {
+        const newWeights = { ...prev.currentWeights };
+        const newAttempts = { ...(prev.exerciseAttempts || {}) };
+        const newFailures = { ...(prev.consecutiveFailures || {}) };
+        const deloadNotifications: Array<{ exercise: string; message: string }> = [];
 
-    console.log('✅ Tizi Tracker: Workout completed', {
-      type: activeSession.type,
-      exercises: completedExercises.length,
-      nextWorkout,
-      duration: completedSession.endTime && activeSession.startTime 
-        ? Math.round((completedSession.endTime - activeSession.startTime) / 1000 / 60) + ' minutes'
-        : 'N/A'
+        // Only progress if it was a standard 5x5 workout
+        if (activeSession.type === 'A' || activeSession.type === 'B') {
+            completedExercises.forEach(ex => {
+                const progression = calculateProgression(ex, prev);
+                
+                newWeights[ex.name] = progression.nextWeight;
+                newAttempts[ex.name] = progression.nextAttempt;
+                newFailures[ex.name] = progression.nextConsecutiveFailures;
+                
+                // Handle deload notification
+                if (progression.deloadInfo) {
+                    deloadNotifications.push({
+                        exercise: ex.name,
+                        message: `${ex.name}: ${progression.deloadInfo.reason} (${progression.deloadInfo.oldWeight}${prev.unit} → ${progression.deloadInfo.newWeight}${prev.unit})`
+                    });
+                    console.log(`⚠️ Tizi Tracker: ${ex.name} auto-deloaded from ${progression.deloadInfo.oldWeight}${prev.unit} to ${progression.deloadInfo.newWeight}${prev.unit}`);
+                } else if (progression.nextConsecutiveFailures > 0) {
+                    console.log(`⚠️ Tizi Tracker: ${ex.name} failed (${progression.nextConsecutiveFailures}/3 consecutive failures)`);
+                } else if (ex.sets.every(r => r === 5)) {
+                    const currentAttempt = ex.attempt || 1;
+                    const repeatCount = prev.repeatCount?.[ex.name] ?? 2;
+                    if (currentAttempt >= repeatCount) {
+                        console.log(`📈 Tizi Tracker: ${ex.name} progressed to ${progression.nextWeight}${prev.unit} (attempt 1)`);
+                    } else {
+                        console.log(`🔄 Tizi Tracker: ${ex.name} at ${ex.weight}${prev.unit} (attempt ${progression.nextAttempt}/${repeatCount})`);
+                    }
+                }
+            });
+        }
+
+        const nextWorkout = activeSession.type === 'A' ? 'B' : activeSession.type === 'B' ? 'A' : prev.nextWorkout;
+
+        console.log('✅ Tizi Tracker: Workout completed', {
+          type: activeSession.type,
+          exercises: completedExercises.length,
+          nextWorkout,
+          duration: completedSession.endTime && activeSession.startTime 
+            ? Math.round((completedSession.endTime - activeSession.startTime) / 1000 / 60) + ' minutes'
+            : 'N/A'
+        });
+
+        // Show deload notifications if any (using setTimeout to avoid blocking state update)
+        if (deloadNotifications.length > 0) {
+            const messages = deloadNotifications.map(n => n.message).join('\n');
+            setTimeout(() => {
+                alert(`Plateau Detected\n\n${messages}\n\nThis helps you recover and build momentum to break your personal bests.`);
+            }, 500);
+        }
+
+        // Show completion modal
+        setCompletedWorkout({ workout: completedSession, nextWorkout });
+        
+        // Auto-backup after workout completion (silent, no prompt)
+        setTimeout(() => {
+          const updatedUser = {
+            ...prev,
+            currentWeights: newWeights,
+            exerciseAttempts: newAttempts,
+            consecutiveFailures: newFailures,
+            history: [completedSession, ...prev.history],
+            nextWorkout
+          };
+          exportUserData(updatedUser);
+          console.log('💾 Tizi Tracker: Auto-backup created after workout completion');
+        }, 1000);
+
+        return {
+            ...prev,
+            currentWeights: newWeights,
+            exerciseAttempts: newAttempts,
+            consecutiveFailures: newFailures,
+            history: [completedSession, ...prev.history],
+            nextWorkout
+        };
     });
-
-    // Save the workout to history
-    setUser(prev => ({
-        ...prev,
-        currentWeights: newWeights,
-        exerciseAttempts: newAttempts,
-        history: [completedSession, ...prev.history],
-        nextWorkout
-    }));
-
-    // Show completion modal
-    setCompletedWorkout({ workout: completedSession, nextWorkout });
-    
-    // Auto-backup after workout completion (silent, no prompt)
-    setTimeout(() => {
-      const updatedUser = {
-        ...user,
-        currentWeights: newWeights,
-        exerciseAttempts: newAttempts,
-        history: [completedSession, ...user.history],
-        nextWorkout
-      };
-      exportUserData(updatedUser);
-      console.log('💾 Tizi Tracker: Auto-backup created after workout completion');
-    }, 1000);
     
     // Clear active session
     setActiveSession(null);
@@ -822,10 +869,8 @@ export default function App() {
            <div className="flex items-center gap-3">
                <Logo size={48} className="flex-shrink-0" />
                <div>
-                   <h1 className={`text-3xl font-bold mb-2 ${
-                     theme === 'dark' ? 'text-white' : 'text-slate-900'
-                   }`}>{APP_NAME}</h1>
-                   <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>
+                   <h1 className="text-3xl font-bold mb-2 text-base-content">{APP_NAME}</h1>
+                   <p className="text-base-content/70">
                      Log your progress, whatever the activity.
                    </p>
                </div>
@@ -839,18 +884,14 @@ export default function App() {
                      alert('❌ Failed to save backup. Please try again.');
                    }
                  }}
-                 className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-xl border border-green-500 transition-colors flex items-center gap-2"
+                 className="p-2 bg-success hover:bg-success/80 text-success-content rounded-xl border border-success transition-colors flex items-center gap-2"
                  title="Save Backup to Device"
                >
                    <Download size={18} />
                </button>
                <button 
                  onClick={() => setSettingsOpen(true)}
-                 className={`p-2 rounded-xl border transition-colors ${
-                   theme === 'dark'
-                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'
-                     : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-300'
-                 }`}
+                 className="p-2 rounded-xl border border-base-300 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-base-content transition-colors"
                >
                    <Settings size={20} />
                </button>
@@ -859,13 +900,13 @@ export default function App() {
 
        {/* Backup Reminder */}
        {shouldShowBackupReminder() && (
-         <div className="bg-amber-900/30 border border-amber-600/50 rounded-2xl p-4 mb-4 flex items-start gap-3">
-           <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+         <div className="bg-warning/20 border border-warning/50 rounded-2xl p-4 mb-4 flex items-start gap-3">
+           <AlertCircle size={20} className="text-warning flex-shrink-0 mt-0.5" />
            <div className="flex-1">
-             <div className="text-sm font-semibold text-amber-300 mb-1">
+             <div className="text-sm font-semibold text-base-content mb-1">
                Backup Recommended
              </div>
-             <div className="text-xs text-amber-400/80 mb-2">
+             <div className="text-xs text-base-content/80 mb-2">
                {getLastBackupDate() 
                  ? `Last backup: ${getLastBackupDate()!.toLocaleDateString()} (${getDaysSinceLastBackup()} days ago)`
                  : 'You haven\'t created a backup yet. Save your data to your device now!'}
@@ -878,7 +919,7 @@ export default function App() {
                    alert('❌ Failed to save backup. Please try again.');
                  }
                }}
-               className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+               className="text-xs bg-warning hover:bg-warning/80 text-warning-content px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5"
              >
                <Download size={14} />
                Save Backup Now
@@ -889,41 +930,29 @@ export default function App() {
 
        {/* Recent Workout Card */}
        {recentWorkout && (
-         <div className={`rounded-2xl p-5 border mb-4 ${
-           theme === 'dark'
-             ? 'bg-slate-800 border-slate-700'
-             : 'bg-white border-slate-300'
-         }`}>
+         <div className="rounded-2xl p-5 border border-base-300 bg-base-200 mb-4">
            <div className="flex items-center gap-2 mb-3">
-             <HistoryIcon size={16} className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} />
-             <h3 className={`text-sm font-bold uppercase tracking-wider ${
-               theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-             }`}>
+             <HistoryIcon size={16} className="text-base-content/60" />
+             <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">
                {getRelativeDateLabel(recentWorkout.date)}
              </h3>
            </div>
            <div className="flex items-center justify-between mb-2">
-             <span className={`text-lg font-bold ${
-               theme === 'dark' ? 'text-white' : 'text-slate-900'
-             }`}>
+             <span className="text-lg font-bold text-base-content">
                {recentWorkout.customName || `Workout ${recentWorkout.type}`}
              </span>
-             <span className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
+             <span className="text-xs text-base-content/60">
                {new Date(recentWorkout.date).toLocaleDateString()}
              </span>
            </div>
            <div className="flex flex-wrap gap-2 mt-3">
              {recentWorkout.exercises.slice(0, 3).map((ex, idx) => (
-               <span key={idx} className={`text-sm px-3 py-1 rounded-lg ${
-                 theme === 'dark'
-                   ? 'text-slate-300 bg-slate-700/50'
-                   : 'text-slate-700 bg-slate-100'
-               }`}>
+               <span key={idx} className="text-sm px-3 py-1 rounded-lg text-base-content/80 bg-base-300">
                  {ex.name} {ex.weight}{user.unit}
                </span>
              ))}
              {recentWorkout.exercises.length > 3 && (
-               <span className={theme === 'dark' ? 'text-sm text-slate-500' : 'text-sm text-slate-500'}>
+               <span className="text-sm text-base-content/50">
                  +{recentWorkout.exercises.length - 3} more
                </span>
              )}
@@ -932,9 +961,9 @@ export default function App() {
        )}
 
        {/* Quick Start Card */}
-       <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 text-white shadow-2xl border border-blue-500/30 relative overflow-hidden group mb-4">
+       <div className="bg-gradient-to-br from-primary to-secondary rounded-3xl p-6 text-primary-content shadow-2xl border border-primary/30 relative overflow-hidden group mb-4">
            <div className="relative z-10">
-               <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
+               <div className="inline-block px-3 py-1 bg-primary-content/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
                    NEXT 5X5 SESSION
                </div>
                <h2 className="text-3xl font-bold mb-2">Workout {user.nextWorkout}</h2>
@@ -945,7 +974,7 @@ export default function App() {
                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
                  const lastWorkoutDate = lastWorkout ? new Date(lastWorkout.date) : undefined;
                  
-                 const nextDate = getNextWorkoutDate(user.schedule, lastWorkoutDate);
+                 const nextDate = getNextWorkoutDate(user.schedule, lastWorkoutDate, user.history);
                  const today = new Date();
                  today.setHours(0, 0, 0, 0);
                  const nextDateMidnight = new Date(nextDate);
@@ -953,31 +982,56 @@ export default function App() {
                  const daysDiff = Math.round((nextDateMidnight.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                  const isToday = daysDiff === 0;
                  const isTomorrow = daysDiff === 1;
+                 
+                 // Analyze workout patterns for suggestions
+                 const scheduleAnalysis = user.schedule ? analyzeWorkoutPattern(user.history, user.schedule) : null;
+                 
                  return (
-                   <div className="flex items-center gap-2 mb-4 text-blue-100">
-                     <Calendar size={16} />
-                     <span className="text-sm font-medium">
-                       {isToday
-                         ? 'Scheduled for today'
-                         : isTomorrow 
-                         ? 'Scheduled for tomorrow'
-                         : `Scheduled for ${nextDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}`
-                       }
-                     </span>
-                   </div>
+                   <>
+                     <div className="flex items-center gap-2 mb-2 text-info-content">
+                       <Calendar size={16} />
+                       <span className="text-sm font-medium">
+                         {isToday
+                           ? 'Scheduled for today'
+                           : isTomorrow 
+                           ? 'Scheduled for tomorrow'
+                           : `Scheduled for ${nextDate.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}`
+                         }
+                       </span>
+                     </div>
+                     {scheduleAnalysis?.suggestion && (
+                       <div className="flex items-start gap-2 mb-4 text-base-content/80 text-xs bg-info/20 rounded-lg p-2 border border-info/30">
+                         <AlertCircle size={14} className="mt-0.5 flex-shrink-0 text-info" />
+                         <span>{scheduleAnalysis.suggestion}</span>
+                       </div>
+                     )}
+                   </>
                  );
                })()}
                <div className="mb-4 space-y-1.5">
                  {nextWorkoutPreview.map((ex, idx) => {
                    const weightPerSide = getWeightPerSide(ex.weight, user.unit);
+                   const failureCount = user.consecutiveFailures?.[ex.name] || 0;
+                   const attempt = user.exerciseAttempts?.[ex.name] || 1;
+                   const repeatCount = user.repeatCount?.[ex.name] ?? 2;
                    return (
-                     <div key={idx} className="text-blue-100 text-sm">
+                     <div key={idx} className="text-info-content text-sm">
                        <div className="flex items-center gap-2">
-                         <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                         <div className="w-1.5 h-1.5 rounded-full bg-base-content/60" />
                          <span>{ex.name} - {ex.weight}{user.unit}</span>
+                         {failureCount > 0 && (
+                           <span className="text-xs bg-error/30 text-error-content px-2 py-0.5 rounded-full font-medium">
+                             Stalled {failureCount}x
+                           </span>
+                         )}
+                         {failureCount === 0 && attempt > 1 && (
+                           <span className="text-xs bg-info/30 text-info-content px-2 py-0.5 rounded-full font-medium">
+                             Attempt {attempt}/{repeatCount}
+                           </span>
+                         )}
                        </div>
                        {weightPerSide > 0 && (
-                         <div className="text-blue-200/70 text-xs ml-5 mt-0.5">
+                         <div className="text-info-content/70 text-xs ml-5 mt-0.5">
                            {weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{user.unit} / side
                          </div>
                        )}
@@ -987,7 +1041,7 @@ export default function App() {
                </div>
                <button 
                 onClick={() => startWorkout(user.nextWorkout)}
-                className="bg-white text-blue-900 px-6 py-3 rounded-xl font-bold text-md flex items-center gap-2 hover:bg-blue-50 transition-colors shadow-lg"
+                className="btn btn-primary px-6 py-3 rounded-xl font-bold text-md flex items-center gap-2 transition-colors shadow-lg"
                >
                    <Dumbbell size={18} /> Start 5x5
                </button>
@@ -995,45 +1049,31 @@ export default function App() {
        </div>
 
        {/* Activity Hub */}
-       <h3 className={`text-sm font-bold uppercase tracking-widest mb-4 px-1 ${
-         theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
-       }`}>Other Activities</h3>
+       <h3 className="text-sm font-bold uppercase tracking-widest mb-4 px-1 text-base-content/60">Other Activities</h3>
        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            <button 
              onClick={() => startWorkout('Custom')}
-             className={`flex items-center gap-4 p-5 rounded-2xl border transition-all text-left group ${
-               theme === 'dark'
-                 ? 'bg-slate-800 hover:bg-slate-700 border-slate-700'
-                 : 'bg-white hover:bg-slate-50 border-slate-300'
-             }`}
+             className="flex items-center gap-4 p-5 rounded-2xl border transition-all text-left group bg-base-200 hover:bg-base-300 border-base-300"
            >
-                <div className="p-3 bg-orange-500/20 text-orange-400 rounded-xl group-hover:bg-orange-500 group-hover:text-white transition-all">
-                    <Activity size={24} />
+                <div className="p-3 bg-warning/20 text-warning rounded-xl group-hover:bg-warning group-hover:text-warning-content transition-all">
+                    <Activity size={24} className="text-warning" />
                 </div>
                 <div>
-                    <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    <div className="font-bold text-base-content">
                       Custom Activity
                     </div>
-                    <div className={theme === 'dark' ? 'text-xs text-slate-500' : 'text-xs text-slate-600'}>
+                    <div className="text-xs text-base-content/60">
                       Log skipping, cardio, etc.
                     </div>
                 </div>
            </button>
            
-           <div className={`p-5 rounded-2xl border flex flex-col justify-center ${
-             theme === 'dark'
-               ? 'bg-slate-800/40 border-slate-700/50'
-               : 'bg-slate-50 border-slate-300/50'
-           }`}>
-                <div className={theme === 'dark' ? 'text-slate-500 text-xs mb-1' : 'text-slate-600 text-xs mb-1'}>
+           <div className="p-5 rounded-2xl border flex flex-col justify-center bg-base-200/50 border-base-300/50">
+                <div className="text-base-content/60 text-xs mb-1">
                   Total History
                 </div>
-                <div className={`text-2xl font-bold flex items-center gap-2 ${
-                  theme === 'dark' ? 'text-white' : 'text-slate-900'
-                }`}>
-                    {user.history.length} <span className={`text-sm font-normal ${
-                      theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
-                    }`}>entries</span>
+                <div className="text-2xl font-bold flex items-center gap-2 text-base-content">
+                    {user.history.length} <span className="text-sm font-normal text-base-content/60">entries</span>
                 </div>
            </div>
        </div>
@@ -1046,19 +1086,20 @@ export default function App() {
       return (
         <div className="max-w-2xl mx-auto p-4 pb-32">
              <div className="flex justify-between items-center mb-6">
-                 <div>
-                     <h2 className={`text-2xl font-bold ${
-                       theme === 'dark' ? 'text-white' : 'text-slate-900'
-                     }`}>
-                         {activeSession.customName ? activeSession.customName : `Workout ${activeSession.type}`}
-                     </h2>
-                     <div className={theme === 'dark' ? 'text-slate-400 text-sm' : 'text-slate-600 text-sm'}>
-                       {new Date(activeSession.startTime).toLocaleTimeString()}
-                     </div>
-                 </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-base-content">
+                        {activeSession.customName ? activeSession.customName : `Workout ${activeSession.type}`}
+                    </h2>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="text-base-content/60 text-sm">
+                        Started: {new Date(activeSession.startTime).toLocaleTimeString()}
+                      </div>
+                      <WorkoutTimer startTime={activeSession.startTime} theme={theme} />
+                    </div>
+                </div>
                  <button 
                     onClick={cancelWorkout} 
-                    className="text-red-400 hover:text-red-300 text-sm font-bold px-4 py-2 bg-red-900/20 hover:bg-red-900/40 rounded-xl border border-red-900/30 transition-all"
+                    className="text-error hover:text-error/80 text-sm font-bold px-4 py-2 bg-error/20 hover:bg-error/40 rounded-xl border border-error/30 transition-all"
                   >
                     Cancel
                   </button>
@@ -1071,6 +1112,7 @@ export default function App() {
                         exercise={ex} 
                         unit={user.unit}
                         exerciseIndex={exIdx}
+                        theme={theme}
                         onSetUpdate={(setIdx, reps) => updateSet(exIdx, setIdx, reps)}
                         onOpenGuide={fetchGuide}
                         onOpenWarmup={(name, weight) => setWarmupModal({name, weight})}
@@ -1079,24 +1121,18 @@ export default function App() {
                     />
                 ))}
                 
-                <button 
+                <button
                     onClick={() => setAddExerciseModalOpen(true)}
-                    className="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 border-2 border-dashed border-base-300 rounded-2xl text-base-content/50 hover:text-base-content/70 hover:border-base-content/30 transition-all flex items-center justify-center gap-2"
                 >
                     <PlusCircle size={20} /> Add Exercise
                 </button>
              </div>
 
             <div className="mt-8">
-                <label className={`block text-sm mb-2 font-medium ${
-                  theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-                }`}>Session Notes</label>
+                <label className="block text-sm mb-2 font-medium text-base-content/70">Session Notes</label>
                 <textarea 
-                    className={`w-full border rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      theme === 'dark'
-                        ? 'bg-slate-800 border-slate-700 text-white'
-                        : 'bg-white border-slate-300 text-slate-900'
-                    }`}
+                    className="w-full border border-base-300 rounded-xl p-3 bg-base-200 text-base-content focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     rows={3}
                     placeholder="How did it feel?"
                     value={activeSession.notes}
@@ -1104,14 +1140,10 @@ export default function App() {
                 />
             </div>
 
-            <div className={`fixed bottom-0 left-0 right-0 p-4 backdrop-blur border-t flex justify-center z-40 ${
-              theme === 'dark'
-                ? 'bg-slate-900/90 border-slate-800'
-                : 'bg-white/90 border-slate-300'
-            }`}>
+            <div className="fixed bottom-0 left-0 right-0 p-4 backdrop-blur border-t border-base-300 bg-base-100/90 flex justify-center z-40">
                 <button 
                     onClick={finishWorkout}
-                    className="w-full max-w-md bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+                    className="w-full max-w-md bg-success hover:bg-success/80 text-success-content py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all"
                 >
                     <Check size={24} /> Finish & Log
                 </button>
@@ -1121,27 +1153,17 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen font-sans selection:bg-blue-500/30 ${
-      theme === 'dark' 
-        ? 'bg-slate-900 text-slate-200' 
-        : 'bg-slate-50 text-slate-900'
-    }`}>
+    <div className="min-h-screen font-sans selection:bg-primary/30 bg-base-100 text-base-content">
       
       {!activeSession && (
-          <div className={`fixed bottom-0 w-full backdrop-blur-md border-t z-50 ${
-            theme === 'dark' 
-              ? 'bg-slate-800/80 border-slate-700' 
-              : 'bg-white/90 border-slate-300'
-          }`}>
+          <div className="fixed bottom-0 w-full backdrop-blur-md border-t z-50 bg-base-200/90 border-base-300">
               <div className="flex justify-around max-w-md mx-auto">
                   <button 
                     onClick={() => setActiveTab('workout')}
                     className={`flex-1 py-4 flex flex-col items-center gap-1 ${
                       activeTab === 'workout' 
-                        ? 'text-blue-400' 
-                        : theme === 'dark' 
-                          ? 'text-slate-500 hover:text-slate-300' 
-                          : 'text-slate-400 hover:text-slate-600'
+                        ? 'text-primary' 
+                        : 'text-base-content/60 hover:text-base-content'
                     }`}
                   >
                       <LayoutDashboard size={20} />
@@ -1151,10 +1173,8 @@ export default function App() {
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-4 flex flex-col items-center gap-1 ${
                       activeTab === 'history' 
-                        ? 'text-blue-400' 
-                        : theme === 'dark' 
-                          ? 'text-slate-500 hover:text-slate-300' 
-                          : 'text-slate-400 hover:text-slate-600'
+                        ? 'text-primary' 
+                        : 'text-base-content/60 hover:text-base-content'
                     }`}
                   >
                       <HistoryIcon size={20} />
@@ -1164,10 +1184,8 @@ export default function App() {
                     onClick={() => setActiveTab('progress')}
                     className={`flex-1 py-4 flex flex-col items-center gap-1 ${
                       activeTab === 'progress' 
-                        ? 'text-blue-400' 
-                        : theme === 'dark' 
-                          ? 'text-slate-500 hover:text-slate-300' 
-                          : 'text-slate-400 hover:text-slate-600'
+                        ? 'text-primary' 
+                        : 'text-base-content/60 hover:text-base-content'
                     }`}
                   >
                       <LineChart size={20} />
@@ -1184,16 +1202,10 @@ export default function App() {
                 {activeTab === 'history' && (
                     <div className="max-w-2xl mx-auto p-4 pt-8">
                         <header className="mb-6 flex justify-between items-center">
-                            <h2 className={`text-2xl font-bold ${
-                              theme === 'dark' ? 'text-white' : 'text-slate-900'
-                            }`}>Activity Log</h2>
+                            <h2 className="text-2xl font-bold text-base-content">Activity Log</h2>
                             <button 
                               onClick={() => setSettingsOpen(true)} 
-                              className={`p-2 transition-colors ${
-                                theme === 'dark'
-                                  ? 'text-slate-400 hover:text-white'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
+                              className="p-2 transition-colors text-base-content/60 hover:text-base-content"
                             >
                               <Settings size={18} />
                             </button>
@@ -1204,16 +1216,10 @@ export default function App() {
                 {activeTab === 'progress' && (
                     <div className="max-w-2xl mx-auto p-4 pt-8">
                         <header className="mb-6 flex justify-between items-center">
-                            <h2 className={`text-2xl font-bold ${
-                              theme === 'dark' ? 'text-white' : 'text-slate-900'
-                            }`}>Trends</h2>
+                            <h2 className="text-2xl font-bold text-base-content">Trends</h2>
                             <button 
                               onClick={() => setSettingsOpen(true)} 
-                              className={`p-2 transition-colors ${
-                                theme === 'dark'
-                                  ? 'text-slate-400 hover:text-white'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
+                              className="p-2 transition-colors text-base-content/60 hover:text-base-content"
                             >
                               <Settings size={18} />
                             </button>
@@ -1225,14 +1231,22 @@ export default function App() {
           )}
       </main>
 
-      <RestTimer initialSeconds={90} autoStart={restTimerStart} />
+      <RestTimer 
+        initialSeconds={restTimerConfig.duration} 
+        autoStart={restTimerConfig.autoStart}
+        theme={theme}
+        key={`${restTimerConfig.duration}-${restTimerConfig.type}`}
+      />
       
       {warmupModal && (
           <WarmupCalculator 
             exerciseName={warmupModal.name} 
             workWeight={warmupModal.weight} 
             unit={user.unit}
+            sessionId={activeSession?.id} // Pass session ID to isolate warmup state per workout
             onClose={() => setWarmupModal(null)}
+            onWarmupComplete={handleWarmupComplete}
+            onStartRestTimer={handleStartRestTimer}
           />
       )}
       
@@ -1250,7 +1264,7 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         user={user}
         theme={theme}
-        onThemeChange={setTheme}
+        onThemeChange={handleThemeChange}
         onImport={(data) => setUser(data)}
         onReset={async () => {
           if (window.confirm("Are you sure? This will delete all your history and reset weights. This cannot be undone.")) {
@@ -1316,25 +1330,25 @@ export default function App() {
 
       {guideModal && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
-              <div className="bg-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-700 max-h-[80vh] flex flex-col">
-                  <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-                      <h3 className="text-lg font-bold text-white">Coach: {guideModal.name}</h3>
-                      <button onClick={() => setGuideModal(null)}><Plus className="rotate-45 text-slate-400 hover:text-white transition-colors" size={24} /></button>
+              <div className="bg-base-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl border border-base-300 max-h-[80vh] flex flex-col">
+                  <div className="p-4 border-b border-base-300 flex justify-between items-center bg-base-300/50">
+                      <h3 className="text-lg font-bold text-base-content">Coach: {guideModal.name}</h3>
+                      <button onClick={() => setGuideModal(null)}><Plus className="rotate-45 text-base-content/60 hover:text-base-content transition-colors" size={24} /></button>
                   </div>
                   <div className="p-6 overflow-y-auto">
                       {guideModal.loading ? (
                           <div className="flex flex-col items-center justify-center py-12 gap-4">
-                              <Loader2 className="animate-spin text-blue-500" size={40} />
-                              <p className="text-slate-400">Loading AI tips...</p>
+                              <Loader2 className="animate-spin text-primary" size={40} />
+                              <p className="text-base-content/60">Loading AI tips...</p>
                           </div>
                       ) : (
                           <>
                             <div className="mb-6">
-                                <h4 className="text-xs uppercase tracking-widest text-blue-400 font-bold mb-3">Form Check</h4>
+                                <h4 className="text-xs uppercase tracking-widest text-primary font-bold mb-3">Form Check</h4>
                                 <ul className="space-y-3">
                                     {guideModal.data?.tips.map((tip, i) => (
-                                        <li key={i} className="flex gap-3 text-slate-200 text-sm">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+                                        <li key={i} className="flex gap-3 text-base-content/80 text-sm">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
                                             <span className="leading-relaxed">{tip}</span>
                                         </li>
                                     ))}
@@ -1342,7 +1356,7 @@ export default function App() {
                             </div>
                             
                             <div>
-                                <h4 className="text-xs uppercase tracking-widest text-red-400 font-bold mb-3">Videos</h4>
+                                <h4 className="text-xs uppercase tracking-widest text-error font-bold mb-3">Videos</h4>
                                 <div className="space-y-3">
                                     {guideModal.data?.videos.map((vid, i) => (
                                         <a 
@@ -1350,9 +1364,9 @@ export default function App() {
                                           href={vid.uri} 
                                           target="_blank" 
                                           rel="noreferrer"
-                                          className="block bg-slate-700/50 hover:bg-slate-700 p-4 rounded-xl border border-slate-600 transition-colors group"
+                                          className="block bg-base-300/50 hover:bg-base-300 p-4 rounded-xl border border-base-300 transition-colors group"
                                         >
-                                            <div className="font-bold text-white group-hover:text-blue-300 flex items-center justify-between gap-2">
+                                            <div className="font-bold text-base-content group-hover:text-primary flex items-center justify-between gap-2">
                                                 {vid.title} 
                                                 <ExternalLink size={14} className="opacity-50" />
                                             </div>

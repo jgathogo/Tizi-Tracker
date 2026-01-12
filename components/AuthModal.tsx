@@ -33,25 +33,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   if (!isAuthAvailable()) {
     return (
       <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-        <div className="bg-slate-800 rounded-2xl w-full max-w-md p-6 border border-slate-700">
+        <div className="bg-base-200 rounded-2xl w-full max-w-md p-6 border border-base-300">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">Cloud Sync Not Available</h2>
+            <h2 className="text-xl font-bold text-base-content">Cloud Sync Not Available</h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-base-content/60 hover:text-base-content transition-colors"
             >
               <X size={20} />
             </button>
           </div>
-          <p className="text-slate-300 mb-4">
+          <p className="text-base-content/80 mb-4">
             Firebase is not configured. Cloud sync features are disabled.
           </p>
-          <p className="text-sm text-slate-400 mb-4">
-            To enable cloud sync, configure Firebase in <code className="bg-slate-700 px-2 py-1 rounded">services/firebaseConfig.ts</code>
+          <p className="text-sm text-base-content/60 mb-4">
+            To enable cloud sync, configure Firebase in <code className="bg-base-300 px-2 py-1 rounded">services/firebaseConfig.ts</code>
           </p>
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-colors"
+            className="w-full btn btn-primary py-2 rounded-lg font-semibold transition-colors"
           >
             Close
           </button>
@@ -128,14 +128,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-      <div className="bg-slate-800 rounded-2xl w-full max-w-md p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
+      <div className="bg-base-200 rounded-2xl w-full max-w-md p-6 border border-base-300 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-base-content">
             {isSignUp ? 'Sign Up' : 'Sign In'}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-base-content/60 hover:text-base-content transition-colors"
           >
             <X size={24} />
           </button>
@@ -163,42 +163,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
         </button>
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex-1 h-px bg-slate-700"></div>
-          <span className="text-slate-400 text-sm">or</span>
-          <div className="flex-1 h-px bg-slate-700"></div>
+          <div className="flex-1 h-px bg-base-300"></div>
+          <span className="text-base-content/60 text-sm">or</span>
+          <div className="flex-1 h-px bg-base-300"></div>
         </div>
 
         {/* Email/Password Form */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-base-content/80 mb-2">
               Email
             </label>
             <div className="relative">
-              <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-base-content/80 mb-2">
               Password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 disabled={loading}
               />
             </div>
@@ -206,17 +206,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
 
           {isSignUp && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-base-content/80 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60" />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   disabled={loading}
                 />
               </div>
@@ -226,7 +226,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           <button
             onClick={handleEmailAuth}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full btn btn-primary py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -259,8 +259,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           </button>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-slate-700">
-          <p className="text-xs text-slate-400 text-center">
+        <div className="mt-6 pt-4 border-t border-base-300">
+          <p className="text-xs text-base-content/60 text-center">
             By signing in, you agree to sync your workout data to the cloud.
             Your data is encrypted and secure.
           </p>

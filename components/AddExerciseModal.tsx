@@ -47,15 +47,15 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-700 transform transition-all"
+        className="bg-base-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-base-300 transform transition-all"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-          <h3 className="text-lg font-bold text-white">Add Exercise</h3>
+        <div className="p-4 border-b border-base-300 flex justify-between items-center bg-base-300/50">
+          <h3 className="text-lg font-bold text-base-content">Add Exercise</h3>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-base-content/60 hover:text-base-content transition-colors"
           >
             <X size={24} />
           </button>
@@ -63,7 +63,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-base-content/80 mb-2">
               Exercise Name
             </label>
             <input
@@ -72,7 +72,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
               value={exerciseName}
               onChange={(e) => setExerciseName(e.target.value)}
               placeholder="e.g., Push-ups, Pull-ups, Running"
-              className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full bg-base-300 border border-base-300 rounded-xl px-4 py-3 text-base-content placeholder-base-content/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               autoFocus
             />
           </div>
@@ -81,14 +81,14 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-medium transition-colors"
+              className="flex-1 px-4 py-3 bg-base-300 hover:bg-base-300/80 text-base-content/80 rounded-xl font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!exerciseName.trim()}
-              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 btn btn-primary disabled:bg-base-300 disabled:text-base-content/50 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={18} /> Add Exercise
             </button>

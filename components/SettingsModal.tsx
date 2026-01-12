@@ -4,7 +4,8 @@ import { UserProfile, WorkoutSchedule } from '../types';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { isAuthAvailable } from '../services/authService';
 import { isSyncAvailable, saveToCloud } from '../services/syncService';
-import type { Theme } from '../App';
+import type { Theme } from '../utils/themeColors';
+import { availableThemes } from '../utils/themeColors';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -117,27 +118,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4 backdrop-blur-sm">
-      <div className={`rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border overflow-hidden ${
-        theme === 'dark'
-          ? 'bg-slate-800 border-slate-700'
-          : 'bg-white border-slate-300'
-      }`}>
-        <div className={`p-4 border-b flex justify-between items-center flex-shrink-0 ${
-          theme === 'dark'
-            ? 'border-slate-700 bg-slate-900/50'
-            : 'border-slate-300 bg-slate-50'
-        }`}>
-          <div className={`flex items-center gap-2 ${
-            theme === 'dark' ? 'text-white' : 'text-slate-900'
-          }`}>
+      <div className="rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border border-base-300 bg-base-200 overflow-hidden">
+        <div className="p-4 border-b border-base-300 flex justify-between items-center flex-shrink-0 bg-base-200">
+          <div className="flex items-center gap-2 text-base-content">
              <Settings size={20} />
              <h3 className="text-lg font-bold">Data & Settings</h3>
           </div>
           <button 
             onClick={onClose} 
-            className={`transition-colors ${
-              theme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-            }`}
+            className="transition-colors text-base-content/60 hover:text-base-content"
           >
             <X size={24} />
           </button>
@@ -147,39 +136,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           
           {/* Export Section */}
           <div className="space-y-2">
-            <h4 className={`text-sm font-bold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}>Backup</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/70">Backup</h4>
             <button 
                 onClick={handleExport}
-                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
-                  theme === 'dark'
-                    ? 'bg-slate-700/50 hover:bg-slate-700 border-slate-600'
-                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300'
-                }`}
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-base-300 bg-base-200 hover:bg-base-300 transition-all group"
             >
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                    <div className="p-2 bg-primary/20 text-primary rounded-lg group-hover:bg-primary group-hover:text-primary-content transition-colors">
                         <Download size={20} />
                     </div>
                     <div className="text-left">
-                        <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                        <div className="font-bold text-base-content">
                           Export Data
                         </div>
-                        <div className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
+                        <div className="text-xs text-base-content/60">
                           Download JSON backup
                         </div>
                     </div>
                 </div>
-                <FileJson size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
+                <FileJson size={18} className="text-base-content/50" />
             </button>
           </div>
 
           {/* Import Section */}
           <div className="space-y-2">
-            <h4 className={`text-sm font-bold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}>Restore</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/70">Restore</h4>
             <input 
                 type="file" 
                 ref={fileInputRef}
@@ -189,78 +170,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
             <button 
                 onClick={() => fileInputRef.current?.click()}
-                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
-                  theme === 'dark'
-                    ? 'bg-slate-700/50 hover:bg-slate-700 border-slate-600'
-                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300'
-                }`}
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-base-300 bg-base-200 hover:bg-base-300 transition-all group"
             >
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <div className="p-2 bg-success/20 text-success rounded-lg group-hover:bg-success group-hover:text-success-content transition-colors">
                         <Upload size={20} />
                     </div>
                     <div className="text-left">
-                        <div className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                        <div className="font-bold text-base-content">
                           Import Data
                         </div>
-                        <div className={theme === 'dark' ? 'text-xs text-slate-400' : 'text-xs text-slate-600'}>
+                        <div className="text-xs text-base-content/60">
                           Restore from JSON file
                         </div>
                     </div>
                 </div>
-                <FileJson size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
+                <FileJson size={18} className="text-base-content/50" />
             </button>
-            {error && <div className="text-red-400 text-xs px-2">{error}</div>}
+            {error && <div className="text-error text-xs px-2">{error}</div>}
           </div>
 
-          <hr className={theme === 'dark' ? 'border-slate-700' : 'border-slate-300'} />
+          <hr className="border-base-300" />
 
-          {/* Theme Toggle Section */}
+          {/* Theme Selector Section */}
           <div className="space-y-3">
-            <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}>
+            <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-base-content/70`}>
               {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />} Appearance
             </h4>
             
-            <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-              <div>
-                <div className={`text-sm font-semibold ${
-                  theme === 'dark' ? 'text-white' : 'text-slate-900'
-                }`}>
-                  {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                </div>
-                <div className={`text-xs ${
-                  theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  {theme === 'dark' 
-                    ? 'Better for low-light environments and battery life'
-                    : 'Better for bright environments and readability'}
-                </div>
-              </div>
-              <button
-                onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  theme === 'dark' ? 'bg-blue-600' : 'bg-orange-500'
-                }`}
+            <div className="space-y-2">
+              <label className={`text-xs font-medium text-base-content/70`}>
+                Choose Theme
+              </label>
+              <select
+                value={theme}
+                onChange={(e) => onThemeChange(e.target.value as Theme)}
+                className="w-full px-3 py-2 rounded-lg border bg-base-200 border-base-300 text-base-content focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <div
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    theme === 'dark' ? 'left-1' : 'right-1'
-                  }`}
-                />
-              </button>
+                {availableThemes.map((themeOption) => (
+                  <option key={themeOption} value={themeOption}>
+                    {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-base-content/60">
+                Select from 30+ beautiful themes. Changes apply instantly.
+              </div>
             </div>
           </div>
 
-          <hr className={theme === 'dark' ? 'border-slate-700' : 'border-slate-300'} />
+          <hr className="border-base-300" />
 
           {/* Profile Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
-                theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-              }`}>
+              <h4 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-base-content/70">
                 <User size={14} /> Profile
               </h4>
               {!user.name && (
@@ -272,7 +236,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             
             {/* Name */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Name *</label>
+              <label className="text-xs text-base-content/80">Name *</label>
               <input
                 type="text"
                 value={profileName}
@@ -281,13 +245,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onUpdate({ ...user, name: e.target.value });
                 }}
                 placeholder="Enter your name"
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
             {/* Date of Birth */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Date of Birth</label>
+              <label className="text-xs text-base-content/80">Date of Birth</label>
               <input
                 type="date"
                 value={profileDateOfBirth}
@@ -295,13 +259,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setProfileDateOfBirth(e.target.value);
                   onUpdate({ ...user, dateOfBirth: e.target.value });
                 }}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
             {/* Height */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Height (cm)</label>
+              <label className="text-xs text-base-content/80">Height (cm)</label>
               <input
                 type="number"
                 value={profileHeight}
@@ -314,13 +278,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder="e.g., 175"
                 min="0"
                 step="0.1"
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
             {/* Weight */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Weight ({user.unit})</label>
+              <label className="text-xs text-base-content/80">Weight ({user.unit})</label>
               <input
                 type="number"
                 value={profileWeight}
@@ -333,22 +297,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder={`e.g., 75`}
                 min="0"
                 step="0.1"
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          <hr className="border-slate-700" />
+          <hr className="border-base-300" />
 
           {/* Workout Schedule Section */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
               <Calendar size={14} /> Workout Schedule
             </h4>
             
             {/* Frequency */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Workouts per week</label>
+              <label className="text-xs text-base-content/80">Workouts per week</label>
               <div className="flex gap-2">
                 {[2, 3, 4, 5, 6].map(freq => (
                   <button
@@ -356,8 +320,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => updateFrequency(freq)}
                     className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
                       schedule.frequency === freq
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                        ? 'bg-primary text-primary-content'
+                        : 'bg-base-300 text-base-content/70 hover:bg-base-300/80'
                     }`}
                   >
                     {freq}x
@@ -368,7 +332,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Preferred Days */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300">Preferred workout days</label>
+              <label className="text-xs text-base-content/80">Preferred workout days</label>
               <div className="grid grid-cols-7 gap-2">
                 {dayNames.map((day, idx) => (
                   <button
@@ -376,8 +340,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => toggleDay(idx)}
                     className={`py-2 rounded-lg text-xs font-semibold transition-all ${
                       schedule.preferredDays.includes(idx)
-                        ? 'bg-green-600 text-white'
-                        : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
+                        ? 'bg-success text-success-content'
+                        : 'bg-base-300 text-base-content/60 hover:bg-base-300/80'
                     }`}
                   >
                     {day}
@@ -387,15 +351,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Flexible Mode */}
-            <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
               <div>
-                <div className="text-sm font-semibold text-white">Flexible Schedule</div>
-                <div className="text-xs text-slate-400">Allow workouts on any day, not just preferred</div>
+                <div className="text-sm font-semibold text-base-content">Flexible Schedule</div>
+                <div className="text-xs text-base-content/60">Allow workouts on any day, not just preferred</div>
               </div>
               <button
                 onClick={toggleFlexible}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  schedule.flexible ? 'bg-green-600' : 'bg-slate-600'
+                  schedule.flexible ? 'bg-success' : 'bg-base-300'
                 }`}
               >
                 <div
@@ -409,8 +373,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Repeat Count Per Exercise */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Progression Settings</h4>
-            <div className="text-xs text-slate-400 mb-3">
+            <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider">Progression Settings</h4>
+            <div className="text-xs text-base-content/60 mb-3">
               Set how many times to repeat each exercise at a weight before progressing
             </div>
             <div className="space-y-3">
@@ -418,7 +382,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 const currentRepeatCount = user.repeatCount?.[exerciseName] ?? 2;
                 return (
                   <div key={exerciseName} className="flex items-center justify-between">
-                    <label className="text-sm text-slate-300 flex-1">{exerciseName}</label>
+                    <label className="text-sm text-base-content/80 flex-1">{exerciseName}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
@@ -439,25 +403,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         }}
                         min="1"
                         step="1"
-                        className="w-20 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-20 px-3 py-2 bg-base-300 border border-base-300 rounded-lg text-base-content text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       />
-                      <span className="text-xs text-slate-400 w-8">times</span>
+                      <span className="text-xs text-base-content/60 w-8">times</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="text-xs text-slate-500 mt-2">
+            <div className="text-xs text-base-content/50 mt-2">
               After completing the required number of successful workouts at a weight, the app will automatically increase the weight.
             </div>
           </div>
 
           {/* Weight Increments */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
               <TrendingUp size={14} /> Weight Increments
             </h4>
-            <div className="text-xs text-slate-400 mb-3">
+            <div className="text-xs text-base-content/60 mb-3">
               Set how much weight to add when progressing each exercise
             </div>
             <div className="space-y-3">
@@ -466,7 +430,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 const currentIncrement = user.weightIncrements?.[exerciseName] ?? defaultIncrement;
                 return (
                   <div key={exerciseName} className="flex items-center justify-between">
-                    <label className="text-sm text-slate-300 flex-1">{exerciseName}</label>
+                    <label className="text-sm text-base-content/80 flex-1">{exerciseName}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
@@ -487,25 +451,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         }}
                         min="0"
                         step="0.5"
-                        className="w-20 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-20 px-3 py-2 bg-base-300 border border-base-300 rounded-lg text-base-content text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       />
-                      <span className="text-xs text-slate-400 w-8">{user.unit}</span>
+                      <span className="text-xs text-base-content/60 w-8">{user.unit}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="text-xs text-slate-500 mt-2">
+            <div className="text-xs text-base-content/50 mt-2">
               These increments are used when automatically progressing weights after completing required attempts.
             </div>
           </div>
 
-          <hr className="border-slate-700" />
+          <hr className="border-base-300" />
 
           {/* Cloud Sync Section */}
           {isAuthAvailable() && (
             <div className="space-y-3">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
                 <Cloud size={14} /> Cloud Sync
               </h4>
               
@@ -526,7 +490,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         Sign out
                       </button>
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-base-content/60">
                       {firebaseUser.email}
                     </div>
                   </div>
@@ -536,31 +500,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="flex items-center gap-2">
                       {syncStatus === 'syncing' && (
                         <>
-                          <RefreshCw size={14} className="text-blue-400 animate-spin" />
-                          <span className="text-slate-300">Syncing...</span>
+                          <RefreshCw size={14} className="text-primary animate-spin" />
+                          <span className="text-base-content/80">Syncing...</span>
                         </>
                       )}
                       {syncStatus === 'synced' && (
                         <>
-                          <CheckCircle2 size={14} className="text-green-400" />
-                          <span className="text-slate-300">Synced</span>
+                          <CheckCircle2 size={14} className="text-success" />
+                          <span className="text-base-content/80">Synced</span>
                         </>
                       )}
                       {syncStatus === 'error' && (
                         <>
-                          <AlertTriangle size={14} className="text-red-400" />
-                          <span className="text-red-300">Sync error</span>
+                          <AlertTriangle size={14} className="text-error" />
+                          <span className="text-error">Sync error</span>
                         </>
                       )}
                       {syncStatus === 'idle' && (
                         <>
-                          <Cloud size={14} className="text-slate-400" />
-                          <span className="text-slate-400">Not synced</span>
+                          <Cloud size={14} className="text-base-content/60" />
+                          <span className="text-base-content/60">Not synced</span>
                         </>
                       )}
                     </div>
                     {lastSynced && (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-base-content/50">
                         {lastSynced.toLocaleTimeString()}
                       </span>
                     )}
@@ -596,7 +560,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     )}
                   </button>
 
-                  <div className="text-xs text-slate-500 mt-2">
+                  <div className="text-xs text-base-content/50 mt-2">
                     Your data automatically syncs to the cloud when online. 
                     All data is encrypted and only you can access it.
                   </div>
@@ -604,20 +568,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               ) : (
                 // Not signed in
                 <div className="space-y-3">
-                  <div className="bg-slate-900/40 border border-slate-700 rounded-lg p-4 text-center">
-                    <CloudOff size={24} className="text-slate-400 mx-auto mb-2" />
-                    <p className="text-sm text-slate-300 mb-3">
+                  <div className="bg-base-300/40 border border-base-300 rounded-lg p-4 text-center">
+                    <CloudOff size={24} className="text-base-content/60 mx-auto mb-2" />
+                    <p className="text-sm text-base-content/80 mb-3">
                       Sign in to sync your workout data across all your devices
                     </p>
                     <button
                       onClick={onOpenAuth}
-                      className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium text-sm"
+                      className="w-full flex items-center justify-center gap-2 p-3 btn btn-primary rounded-xl transition-colors font-medium text-sm"
                     >
                       <LogIn size={16} />
                       Sign In / Sign Up
                     </button>
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-base-content/50">
                     Cloud sync is optional. Your data is always saved locally and can be exported.
                   </div>
                 </div>
@@ -625,7 +589,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
-          <hr className="border-slate-700" />
+          <hr className="border-base-300" />
 
           {/* Danger Zone */}
           <div className="space-y-2">

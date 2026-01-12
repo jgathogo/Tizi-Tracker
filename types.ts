@@ -42,6 +42,7 @@ export interface UserProfile {
   schedule?: WorkoutSchedule; // Optional workout schedule settings
   exerciseAttempts?: Record<string, number>; // Track attempt number per exercise at current weight (e.g., { "Squat": 2 } means 2nd attempt at current weight)
   repeatCount?: Record<string, number>; // How many times to repeat each exercise at a weight before progressing, per exercise (e.g., { "Squat": 2, "Bench Press": 2 } means repeat Squat 2x, Bench 2x before progressing; default: 2 for each exercise)
+  consecutiveFailures?: Record<string, number>; // Track consecutive failures per exercise (e.g., { "Squat": 2 } means 2 consecutive failures at current weight)
   name?: string; // User's name for personalization
   dateOfBirth?: string; // Date of birth (ISO format: YYYY-MM-DD)
   height?: number; // Height in cm
