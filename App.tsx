@@ -816,47 +816,64 @@ export default function App() {
   };
 
   const renderDashboard = () => {
-    // Get most recent completed workout
-    const recentWorkout = user.history
+    // Get all completed workouts sorted by date (most recent first)
+    const completedWorkouts = user.history
       .filter(w => w.completed)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    // Most recent completed workout for the \"Recent Workout\" card
+    const recentWorkout = completedWorkouts[0];
     
     // Get exercises for next workout
     const nextExercises = PROGRAMS[user.nextWorkout] || [];
     
     // Calculate next workout preview with smart fallback
+    // For each exercise, find the last time it was performed in history and apply progression logic
     const nextWorkoutPreview = nextExercises.map(name => {
       let weight = user.currentWeights[name] || 0;
       
-      // If weight is suspiciously low (default initial value) and we have history,
-      // try to calculate from the most recent workout
-      const defaultInitialWeight = INITIAL_STATE.currentWeights[name] || 20;
-      if (weight <= defaultInitialWeight && recentWorkout) {
-        // Find this exercise in the most recent workout
-        const recentExercise = recentWorkout.exercises.find(ex => ex.name === name);
-        if (recentExercise) {
-          const recentWeight = recentExercise.weight;
-          // Check if the recent workout was successful (all sets completed)
-          const allSetsDone = recentExercise.sets.every(r => r === 5);
-          if (allSetsDone) {
-            // Calculate what the next weight should be based on progression logic
-            const currentAttempt = recentExercise.attempt || 1;
-            const repeatCount = user.repeatCount?.[name] ?? 2;
-            
-            if (currentAttempt >= repeatCount) {
-              // Should have progressed - calculate next weight
-              const defaultIncrement = name === 'Deadlift' ? 5 : 2.5;
-              const increment = user.weightIncrements?.[name] ?? defaultIncrement;
-              weight = recentWeight + increment;
-              console.log(`🔧 Tizi Tracker: Calculated next weight for ${name} from history: ${weight}${user.unit} (was ${recentWeight}${user.unit} + ${increment}${user.unit})`);
-            } else {
-              // Same weight, next attempt
-              weight = recentWeight;
-            }
+      // Find the last workout where this exercise was performed
+      // This fixes issue #33: exercises exclusive to the next workout (e.g., OHP/Deadlift in Workout B)
+      // will now correctly show their last used weight instead of resetting to defaults
+      let lastExerciseData: ExerciseSession | null = null;
+      for (const workout of completedWorkouts) {
+        const exercise = workout.exercises.find(ex => ex.name === name);
+        if (exercise) {
+          lastExerciseData = exercise;
+          break; // Found the most recent occurrence
+        }
+      }
+      
+      // If we found historical data for this exercise, calculate the expected weight
+      if (lastExerciseData) {
+        const historicalWeight = lastExerciseData.weight;
+        const allSetsDone = lastExerciseData.sets.every(r => r === 5);
+        const historicalAttempt = lastExerciseData.attempt || 1;
+        const repeatCount = user.repeatCount?.[name] ?? 2;
+        
+        if (allSetsDone) {
+          // Workout was successful - apply progression logic
+          if (historicalAttempt >= repeatCount) {
+            // Should have progressed - calculate next weight
+            const defaultIncrement = name === 'Deadlift' ? 5 : 2.5;
+            const increment = user.weightIncrements?.[name] ?? defaultIncrement;
+            weight = historicalWeight + increment;
+            console.log(`🔧 Tizi Tracker: Calculated next weight for ${name} from history: ${weight}${user.unit} (was ${historicalWeight}${user.unit} + ${increment}${user.unit})`);
           } else {
-            // Workout wasn't fully successful, keep same weight
-            weight = recentWeight;
+            // Same weight, next attempt
+            weight = historicalWeight;
+            console.log(`🔧 Tizi Tracker: Using historical weight for ${name}: ${weight}${user.unit} (attempt ${historicalAttempt + 1}/${repeatCount})`);
           }
+        } else {
+          // Workout wasn't fully successful, keep same weight
+          weight = historicalWeight;
+          console.log(`🔧 Tizi Tracker: Using historical weight for ${name}: ${weight}${user.unit} (workout was not fully successful)`);
+        }
+      } else {
+        // No history found for this exercise - use currentWeights (may be default)
+        const defaultInitialWeight = INITIAL_STATE.currentWeights[name] || 20;
+        if (weight <= defaultInitialWeight) {
+          console.log(`ℹ️ Tizi Tracker: No history found for ${name}, using current weight: ${weight}${user.unit}`);
         }
       }
       

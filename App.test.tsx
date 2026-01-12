@@ -15,8 +15,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { UserProfile, ExerciseSession } from './types';
+import { render, screen } from '@testing-library/react';
+import { UserProfile, ExerciseSession, WorkoutSessionData } from './types';
 import { calculateProgression } from './utils/progressionUtils';
+import App from './App';
 
 describe('Workout Completion Flow - Issue #28', () => {
   /**
@@ -144,5 +146,95 @@ describe('Workout Completion Flow - Issue #28', () => {
     expect(progression.nextWeight).toBe(42.5); // Same weight
     expect(progression.nextAttempt).toBe(2); // Increment to 2nd attempt
     expect(progression.nextConsecutiveFailures).toBe(0);
+  });
+});
+
+describe('Dashboard Rendering', () => {
+  /**
+   * Test that the dashboard renders correctly with workout history.
+   * This catches bugs like undefined variables in renderDashboard().
+   * 
+   * Issue: After refactoring renderDashboard() to fix issue #33, the recentWorkout
+   * variable was not defined, causing a ReferenceError when the dashboard tried to
+   * render the "Recent Workout" card.
+   */
+  it('should render dashboard without errors when history exists', () => {
+    // Mock localStorage to return user data with history
+    const mockUser: UserProfile = {
+      currentWeights: {
+        'Squat': 40,
+        'Bench Press': 40,
+        'Barbell Row': 40,
+        'Overhead Press': 30,
+        'Deadlift': 50
+      },
+      nextWorkout: 'A',
+      history: [
+        {
+          id: '1',
+          date: new Date().toISOString(),
+          type: 'A',
+          exercises: [
+            { name: 'Squat', weight: 40, sets: [5, 5, 5, 5, 5], attempt: 1 },
+            { name: 'Bench Press', weight: 40, sets: [5, 5, 5, 5, 5], attempt: 1 },
+            { name: 'Barbell Row', weight: 40, sets: [5, 5, 5, 5, 5], attempt: 1 }
+          ],
+          completed: true,
+          startTime: Date.now() - 3600000,
+          endTime: Date.now() - 3000000
+        } as WorkoutSessionData
+      ],
+      unit: 'kg',
+      repeatCount: {
+        'Squat': 2,
+        'Bench Press': 2,
+        'Barbell Row': 2,
+        'Overhead Press': 2,
+        'Deadlift': 2
+      },
+      weightIncrements: {
+        'Squat': 2.5,
+        'Bench Press': 2.5,
+        'Barbell Row': 2.5,
+        'Overhead Press': 2.5,
+        'Deadlift': 5
+      }
+    };
+
+    localStorage.setItem('tizi_tracker_data', JSON.stringify(mockUser));
+
+    // Render App - should not throw
+    expect(() => {
+      render(<App />);
+    }).not.toThrow();
+
+    // Should render dashboard elements
+    expect(screen.getByText(/Tizi Tracker/i)).toBeInTheDocument();
+  });
+
+  it('should render dashboard without errors when no history exists', () => {
+    // Mock localStorage with empty history
+    const mockUser: UserProfile = {
+      currentWeights: {
+        'Squat': 20,
+        'Bench Press': 20,
+        'Barbell Row': 30,
+        'Overhead Press': 20,
+        'Deadlift': 40
+      },
+      nextWorkout: 'A',
+      history: [],
+      unit: 'kg'
+    };
+
+    localStorage.setItem('tizi_tracker_data', JSON.stringify(mockUser));
+
+    // Render App - should not throw even with no history
+    expect(() => {
+      render(<App />);
+    }).not.toThrow();
+
+    // Should still render dashboard
+    expect(screen.getByText(/Tizi Tracker/i)).toBeInTheDocument();
   });
 });
