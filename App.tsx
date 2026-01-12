@@ -1097,12 +1097,21 @@ export default function App() {
                       <WorkoutTimer startTime={activeSession.startTime} theme={theme} />
                     </div>
                 </div>
-                 <button 
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setSettingsOpen(true)} 
+                    className="p-2 transition-colors text-base-content/60 hover:text-base-content rounded-lg hover:bg-base-200"
+                    title="Settings"
+                  >
+                    <Settings size={20} />
+                  </button>
+                  <button 
                     onClick={cancelWorkout} 
                     className="text-error hover:text-error/80 text-sm font-bold px-4 py-2 bg-error/20 hover:bg-error/40 rounded-xl border border-error/30 transition-all"
                   >
                     Cancel
                   </button>
+                </div>
              </div>
 
              <div className="space-y-4">
@@ -1155,50 +1164,51 @@ export default function App() {
   return (
     <div className="min-h-screen font-sans selection:bg-primary/30 bg-base-100 text-base-content">
       
-      {!activeSession && (
-          <div className="fixed bottom-0 w-full backdrop-blur-md border-t z-50 bg-base-200/90 border-base-300">
-              <div className="flex justify-around max-w-md mx-auto">
-                  <button 
-                    onClick={() => setActiveTab('workout')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
-                      activeTab === 'workout' 
-                        ? 'text-primary' 
-                        : 'text-base-content/60 hover:text-base-content'
-                    }`}
-                  >
-                      <LayoutDashboard size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-tighter">Dash</span>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('history')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
-                      activeTab === 'history' 
-                        ? 'text-primary' 
-                        : 'text-base-content/60 hover:text-base-content'
-                    }`}
-                  >
-                      <HistoryIcon size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-tighter">History</span>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('progress')}
-                    className={`flex-1 py-4 flex flex-col items-center gap-1 ${
-                      activeTab === 'progress' 
-                        ? 'text-primary' 
-                        : 'text-base-content/60 hover:text-base-content'
-                    }`}
-                  >
-                      <LineChart size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-tighter">Trends</span>
-                  </button>
-              </div>
+      <div className="fixed bottom-0 w-full backdrop-blur-md border-t z-50 bg-base-200/90 border-base-300">
+          <div className="flex justify-around max-w-md mx-auto">
+              <button 
+                onClick={() => setActiveTab('workout')}
+                className={`flex-1 py-4 flex flex-col items-center gap-1 relative ${
+                  activeTab === 'workout' 
+                    ? 'text-primary' 
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+              >
+                  <LayoutDashboard size={20} />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter">Dash</span>
+                  {activeSession && (
+                    <span className="absolute top-1 right-1/4 w-2 h-2 bg-success rounded-full animate-pulse" title="Active workout in progress" />
+                  )}
+              </button>
+              <button 
+                onClick={() => setActiveTab('history')}
+                className={`flex-1 py-4 flex flex-col items-center gap-1 ${
+                  activeTab === 'history' 
+                    ? 'text-primary' 
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+              >
+                  <HistoryIcon size={20} />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter">History</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('progress')}
+                className={`flex-1 py-4 flex flex-col items-center gap-1 ${
+                  activeTab === 'progress' 
+                    ? 'text-primary' 
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+              >
+                  <LineChart size={20} />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter">Trends</span>
+              </button>
           </div>
-      )}
+      </div>
 
-      <main className={!activeSession ? "pb-24" : ""}>
-          {activeSession ? renderActiveSession() : (
+      <main className="pb-24">
+          {activeSession && activeTab === 'workout' ? renderActiveSession() : (
               <>
-                {activeTab === 'workout' && renderDashboard()}
+                {activeTab === 'workout' && !activeSession && renderDashboard()}
                 {activeTab === 'history' && (
                     <div className="max-w-2xl mx-auto p-4 pt-8">
                         <header className="mb-6 flex justify-between items-center">
