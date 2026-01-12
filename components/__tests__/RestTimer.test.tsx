@@ -235,25 +235,34 @@ describe('RestTimer', () => {
     const subButton = screen.getByText(/-10s/i);
     fireEvent.click(subButton);
     
-    // Find the timer display element
-    const timerDisplay = container.querySelector('.text-5xl');
-    expect(timerDisplay?.className).toContain('text-error');
+    // Find the timer display element (now text-2xl inside circular progress)
+    const timerDisplay = container.querySelector('.text-2xl');
+    expect(timerDisplay).toBeTruthy();
+    if (timerDisplay) {
+      expect(timerDisplay.className).toContain('text-error');
+    }
   });
 
   it('should show warning color when exactly at zero', () => {
     const { container } = render(<RestTimer initialSeconds={0} autoStart={true} />);
     
-    // Find the timer display element
-    const timerDisplay = container.querySelector('.text-5xl');
-    expect(timerDisplay?.className).toContain('text-warning');
+    // Find the timer display element (now text-2xl inside circular progress)
+    const timerDisplay = container.querySelector('.text-2xl');
+    expect(timerDisplay).toBeTruthy();
+    if (timerDisplay) {
+      expect(timerDisplay.className).toContain('text-warning');
+    }
   });
 
   it('should show base-content color during countdown (positive time)', () => {
     const { container } = render(<RestTimer initialSeconds={10} autoStart={true} />);
     
-    // Find the timer display element
-    const timerDisplay = container.querySelector('.text-5xl');
-    expect(timerDisplay?.className).toContain('text-base-content');
+    // Find the timer display element (now text-2xl inside circular progress)
+    const timerDisplay = container.querySelector('.text-2xl');
+    expect(timerDisplay).toBeTruthy();
+    if (timerDisplay) {
+      expect(timerDisplay.className).toContain('text-base-content');
+    }
   });
 
   it('should format negative time with minutes correctly', () => {

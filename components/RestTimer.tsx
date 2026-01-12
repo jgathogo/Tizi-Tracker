@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, X, Play, Pause, RefreshCw, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { Timer, X, Play, Pause, RefreshCw, Volume2, VolumeX, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 import { playBellSound, playBeepSound } from '../utils/audioUtils';
+import { triggerHapticFeedback, showNotification, requestNotificationPermission, isHapticAvailable } from '../utils/notificationUtils';
 import type { Theme } from '../utils/themeColors';
 
 interface RestTimerProps {
@@ -20,6 +21,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
   const [enableIntervalAlerts, setEnableIntervalAlerts] = useState(false);
   const hasTriggeredOnCompleteRef = useRef(false);
   const lastIntervalAlertRef = useRef<number | null>(null);
+  const notificationPermissionRequestedRef = useRef(false);
 
   useEffect(() => {
     let interval: number | undefined;
@@ -32,6 +34,18 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
           // Play completion bell when reaching 0 (only once per timer session)
           if (newSeconds === 0 && !hasTriggeredOnCompleteRef.current) {
             hasTriggeredOnCompleteRef.current = true;
+            
+            // Issue #31: Enhanced Rest Timer - Haptics and Background Notifications
+            // Trigger haptic feedback (vibration) when timer completes
+            if (isHapticAvailable()) {
+              triggerHapticFeedback([200, 100, 200, 100, 200]); // buzz-buzz-buzz pattern
+            }
+            
+            // Show background notification if page is not in focus
+            showNotification('Rest Time Complete!', {
+              body: 'Time to start your next set.',
+            });
+            
             if (!isMuted) {
               playBellSound();
             }
@@ -66,6 +80,18 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
          lastIntervalAlertRef.current = null; // Reset interval alert tracking
      }
   }, [autoStart, initialSeconds]); // Reset when initialSeconds changes usually implies new set
+
+  // Request notification permission on mount (only once)
+  useEffect(() => {
+    if (!notificationPermissionRequestedRef.current) {
+      requestNotificationPermission().then(granted => {
+        if (granted) {
+          console.log('✅ Notification permission granted');
+        }
+      });
+      notificationPermissionRequestedRef.current = true;
+    }
+  }, []);
 
   const formatTime = (sec: number) => {
     const isNegative = sec < 0;
@@ -163,8 +189,10 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
   }
 
   // Floating mode: Original bubble design
+  // Fix issue #32: Position timer higher to avoid overlapping Finish button and navigation bar
+  // Changed from bottom-4 (16px) to bottom-28 (112px) to clear the bottom interaction zone
   return (
-    <div className={`fixed bottom-4 right-4 z-[100] transition-all duration-300 ${minimized ? 'w-16 h-16' : 'w-72'}`}>
+    <div className={`fixed bottom-28 right-4 z-[100] transition-all duration-300 ${minimized ? 'w-16 h-16' : 'w-72'}`}>
       <div className="bg-base-200 border border-base-300 rounded-2xl shadow-2xl overflow-hidden text-base-content">
         
         {minimized ? (
@@ -205,15 +233,54 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
               </div>
             </div>
 
-            <div className="text-center mb-4">
-              <div className={`text-5xl font-mono font-bold ${
-                seconds < 0 
-                  ? 'text-error'  // Red when in overrun (negative)
-                  : seconds === 0 
-                    ? 'text-warning'  // Amber when exactly at zero
-                    : 'text-base-content'  // Primary text during countdown
-              }`}>
-                {formatTime(seconds)}
+            {/* Issue #31: Circular progress indicator */}
+            <div className="text-center mb-4 relative">
+              <div className="relative inline-block">
+                {/* Circular progress SVG */}
+                <svg className="transform -rotate-90 w-32 h-32" viewBox="0 0 100 100">
+                  {/* Background circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    className="text-base-300"
+                  />
+                  {/* Progress circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 45}`}
+                    strokeDashoffset={`${2 * Math.PI * 45 * (1 - Math.max(0, Math.min(1, seconds / initialSeconds)))}`}
+                    className={
+                      seconds < 0 
+                        ? 'text-error' 
+                        : seconds === 0 
+                          ? 'text-warning' 
+                          : 'text-primary'
+                    }
+                    style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                  />
+                </svg>
+                {/* Time display in center */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`text-2xl font-mono font-bold ${
+                    seconds < 0 
+                      ? 'text-error'  // Red when in overrun (negative)
+                      : seconds === 0 
+                        ? 'text-warning'  // Amber when exactly at zero
+                        : 'text-base-content'  // Primary text during countdown
+                  }`}>
+                    {formatTime(seconds)}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -223,10 +290,25 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
             </div>
 
             <div className="space-y-2">
+              {/* Issue #31: Prominent restart button */}
+              <button
+                onClick={() => {
+                  setIsActive(false);
+                  setSeconds(initialSeconds);
+                  hasTriggeredOnCompleteRef.current = false;
+                  lastIntervalAlertRef.current = null;
+                }}
+                className="w-full py-2.5 bg-primary hover:bg-primary/80 text-primary-content rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-md"
+                title="Restart timer to full duration"
+              >
+                <RotateCcw size={18} />
+                Restart
+              </button>
+              
               <div className="flex gap-2">
                 <button 
                   onClick={() => setIsActive(!isActive)}
-                  className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-2 ${isActive ? 'bg-amber-600 hover:bg-amber-500' : 'bg-green-600 hover:bg-green-500'}`}
+                  className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-2 ${isActive ? 'bg-warning hover:bg-warning/80 text-warning-content' : 'bg-success hover:bg-success/80 text-success-content'}`}
                 >
                   {isActive ? <><Pause size={18} /> Pause</> : <><Play size={18} /> Resume</>}
                 </button>
@@ -238,6 +320,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
                     lastIntervalAlertRef.current = null; // Reset interval alert tracking
                   }}
                   className="px-3 bg-base-300 hover:bg-base-300/80 rounded-lg"
+                  title="Reset"
                 >
                   <RefreshCw size={18} className="text-base-content" />
                 </button>
