@@ -40,26 +40,26 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
-      <div className="bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-700 transform transition-all">
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-          <h3 className="text-lg font-bold text-white">Update Weight</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+      <div className="bg-base-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-base-300 transform transition-all">
+        <div className="p-4 border-b border-base-300 flex justify-between items-center bg-base-300/50">
+          <h3 className="text-lg font-bold text-base-content">Update Weight</h3>
+          <button onClick={onClose} className="text-base-content/60 hover:text-base-content transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <div className="p-6">
           <div className="text-center mb-6">
-            <div className="text-slate-400 text-sm mb-1">{exerciseName}</div>
+            <div className="text-base-content/60 text-sm mb-1">{exerciseName}</div>
             <div className="flex items-center justify-center gap-2">
               <input
                 type="number"
                 value={weight}
                 onChange={(e) => setWeight(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="bg-transparent text-5xl font-bold text-white text-center w-48 focus:outline-none focus:border-b-2 focus:border-blue-500 transition-all"
+                className="bg-transparent text-5xl font-bold text-base-content text-center w-48 focus:outline-none focus:border-b-2 focus:border-primary transition-all"
                 step="any"
               />
-              <span className="text-xl font-medium text-slate-500 mt-4">{unit}</span>
+              <span className="text-xl font-medium text-base-content/50 mt-4">{unit}</span>
             </div>
           </div>
 
@@ -93,7 +93,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
 
           <button
             onClick={() => onSave(weight)}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]"
+            className="w-full py-4 btn btn-primary font-bold rounded-xl text-lg shadow-lg transition-all active:scale-[0.98]"
           >
             Save Weight
           </button>

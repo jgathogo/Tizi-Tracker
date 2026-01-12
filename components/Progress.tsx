@@ -8,7 +8,13 @@ interface ProgressProps {
   theme?: Theme;
 }
 
+// DaisyUI dark themes for chart styling
+const DARK_THEMES = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'night', 'coffee', 'business'];
+
 export const Progress: React.FC<ProgressProps> = ({ history, theme = 'dark' }) => {
+  // Check if current theme is dark-based
+  const isDark = DARK_THEMES.includes(theme);
+  
   // Transform history into chart data
   // Structure: { date: '2023-01-01', Squat: 100, Bench: 80, ... }
   
@@ -33,42 +39,34 @@ export const Progress: React.FC<ProgressProps> = ({ history, theme = 'dark' }) =
   };
 
   return (
-    <div className={`h-[500px] w-full p-4 rounded-2xl border ${
-      theme === 'dark'
-        ? 'bg-slate-800 border-slate-700'
-        : 'bg-white border-slate-300'
-    }`}>
-      <h3 className={`text-lg font-bold mb-4 ${
-        theme === 'dark' ? 'text-white' : 'text-slate-900'
-      }`}>Strength Progression</h3>
+    <div className="h-[500px] w-full p-4 rounded-2xl border bg-base-200 border-base-300">
+      <h3 className="text-lg font-bold mb-4 text-base-content">Strength Progression</h3>
       {sortedData.length < 2 ? (
-          <div className={`h-full flex items-center justify-center ${
-            theme === 'dark' ? 'text-slate-500' : 'text-slate-600'
-          }`}>
+          <div className="h-full flex items-center justify-center text-base-content/60">
               Not enough data to display chart. Complete more workouts!
           </div>
       ) : (
         <ResponsiveContainer width="100%" height="90%">
             <LineChart data={sortedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#334155' : '#cbd5e1'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#cbd5e1'} />
             <XAxis 
               dataKey="date" 
-              stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} 
+              stroke={isDark ? '#94a3b8' : '#64748b'} 
               fontSize={12} 
               tickMargin={10} 
             />
             <YAxis 
-              stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} 
+              stroke={isDark ? '#94a3b8' : '#64748b'} 
               fontSize={12} 
               domain={['dataMin - 10', 'auto']} 
             />
             <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
-                  borderColor: theme === 'dark' ? '#475569' : '#cbd5e1',
-                  color: theme === 'dark' ? '#f8fafc' : '#1e293b'
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  borderColor: isDark ? '#475569' : '#cbd5e1',
+                  color: isDark ? '#f8fafc' : '#1e293b'
                 }}
-                itemStyle={{ color: theme === 'dark' ? '#cbd5e1' : '#475569' }}
+                itemStyle={{ color: isDark ? '#cbd5e1' : '#475569' }}
             />
             <Legend />
             {(Object.keys(colors) as ExerciseName[]).map(ex => (
