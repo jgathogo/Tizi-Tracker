@@ -419,7 +419,7 @@ describe('RestTimer', () => {
     const floatingContainer = screen.getByText(/Rest Timer/i).closest('.rounded-2xl');
     expect(floatingContainer).toBeInTheDocument();
     
-    // Find dock button (Minimize2 icon)
+    // Find dock button (title contains "Dock")
     const dockButton = screen.getByTitle(/Dock/i);
     fireEvent.click(dockButton);
     
@@ -466,8 +466,8 @@ describe('RestTimer', () => {
     const dockedContainer = screen.getByText(/Rest Timer/i).closest('.bg-base-200');
     expect(dockedContainer).toBeInTheDocument();
     
-    // Undock
-    const undockButton = screen.getByTitle(/Undock/i);
+    // Undock (button title contains "Switch to Floating Mode")
+    const undockButton = screen.getByTitle(/Switch to Floating Mode/i);
     fireEvent.click(undockButton);
     
     // Should be back in floating mode
@@ -488,5 +488,64 @@ describe('RestTimer', () => {
     
     // Should still show timer (minimized in docked mode shows less controls)
     expect(screen.getByText(/1:30/)).toBeInTheDocument();
+  });
+
+  it('should switch to micro mode from floating mode', () => {
+    render(<RestTimer initialSeconds={90} autoStart={true} />);
+    
+    // Initially in floating mode
+    const floatingContainer = screen.getByText(/Rest Timer/i).closest('.rounded-2xl');
+    expect(floatingContainer).toBeInTheDocument();
+    
+    // Switch to micro mode (use getAllByTitle and pick the one in floating mode)
+    const microButtons = screen.getAllByTitle(/Micro Mode/i);
+    // The one in floating mode should be clickable
+    fireEvent.click(microButtons[0]);
+    
+    // Should show micro pill (small rounded-full element with time)
+    expect(screen.getByText(/1:30/)).toBeInTheDocument();
+    const microContainer = screen.getByText(/1:30/).closest('.rounded-full');
+    expect(microContainer).toBeInTheDocument();
+  });
+
+  it('should allow pausing from micro mode', () => {
+    render(<RestTimer initialSeconds={10} autoStart={true} />);
+    
+    // Switch to micro mode
+    const microButtons = screen.getAllByTitle(/Micro Mode/i);
+    fireEvent.click(microButtons[0]);
+    
+    // Pause button should be visible in micro mode
+    const pauseButton = screen.getByTitle(/Pause/i);
+    expect(pauseButton).toBeInTheDocument();
+    
+    // Click pause
+    fireEvent.click(pauseButton);
+    
+    // Timer should be paused
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(screen.getByText(/0:10/)).toBeInTheDocument();
+  });
+
+  it('should allow expanding from micro mode back to floating', () => {
+    render(<RestTimer initialSeconds={90} autoStart={true} />);
+    
+    // Switch to micro mode
+    const microButtons = screen.getAllByTitle(/Micro Mode/i);
+    fireEvent.click(microButtons[0]);
+    
+    // Should be in micro mode
+    const microContainer = screen.getByText(/1:30/).closest('.rounded-full');
+    expect(microContainer).toBeInTheDocument();
+    
+    // Expand back to floating
+    const expandButton = screen.getByTitle(/Expand to full timer/i);
+    fireEvent.click(expandButton);
+    
+    // Should be back in floating mode
+    const floatingContainer = screen.getByText(/Rest Timer/i).closest('.rounded-2xl');
+    expect(floatingContainer).toBeInTheDocument();
   });
 });

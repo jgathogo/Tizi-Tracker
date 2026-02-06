@@ -11,14 +11,17 @@ interface RestTimerProps {
   theme?: Theme;
 }
 
+type DisplayMode = 'floating' | 'docked' | 'micro';
+
 export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoStart = false, onComplete, theme = 'dark' }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isActive, setIsActive] = useState(autoStart);
   const [minimized, setMinimized] = useState(false);
-  const [isDocked, setIsDocked] = useState(false);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('floating');
   const [dockPosition, setDockPosition] = useState<'top' | 'bottom'>('bottom');
   const [isMuted, setIsMuted] = useState(false);
   const [enableIntervalAlerts, setEnableIntervalAlerts] = useState(false);
+  const [isTransparent, setIsTransparent] = useState(false);
   const hasTriggeredOnCompleteRef = useRef(false);
   const lastIntervalAlertRef = useRef<number | null>(null);
   const notificationPermissionRequestedRef = useRef(false);
@@ -107,8 +110,50 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
 
   if (!isActive && seconds === initialSeconds && !autoStart) return null;
 
+  // Micro mode: Minimal pill shape with just time and pause
+  if (displayMode === 'micro') {
+    return (
+      <div className={`fixed top-4 right-4 z-[100] transition-all duration-300 ${
+        isTransparent ? 'opacity-60 hover:opacity-100' : 'opacity-100'
+      }`}>
+        <div className={`
+          flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg border
+          ${isTransparent 
+            ? 'bg-base-200/80 backdrop-blur-sm border-base-300/50' 
+            : 'bg-base-200 border-base-300'
+          }
+          text-base-content
+        `}>
+          <button
+            onClick={() => setIsActive(!isActive)}
+            className="p-0.5 hover:bg-base-300/50 rounded transition-colors"
+            title={isActive ? "Pause" : "Resume"}
+          >
+            {isActive ? <Pause size={14} /> : <Play size={14} />}
+          </button>
+          <span className={`text-sm font-mono font-bold ${
+            seconds < 0 
+              ? 'text-error'
+              : seconds === 0 
+                ? 'text-warning'
+                : 'text-base-content'
+          }`}>
+            {formatTime(seconds)}
+          </span>
+          <button
+            onClick={() => setDisplayMode('floating')}
+            className="p-0.5 hover:bg-base-300/50 rounded transition-colors"
+            title="Expand to full timer"
+          >
+            <Maximize2 size={12} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Docked mode: Slim bar at top or bottom
-  if (isDocked) {
+  if (displayMode === 'docked') {
     return (
       <div className={`fixed ${dockPosition === 'top' ? 'top-0' : 'bottom-20'} left-0 right-0 z-[100] transition-all duration-300`}>
         <div className="bg-base-200 border-b border-base-300 shadow-lg text-base-content">
@@ -167,11 +212,18 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
                   {minimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
                 </button>
                 <button 
-                  onClick={() => setIsDocked(false)} 
+                  onClick={() => setDisplayMode('floating')} 
                   className="p-1.5 hover:bg-base-300 rounded text-base-content/60"
-                  title="Undock (Floating Mode)"
+                  title="Switch to Floating Mode"
                 >
                   <Maximize2 size={16} />
+                </button>
+                <button 
+                  onClick={() => setDisplayMode('micro')} 
+                  className="p-1.5 hover:bg-base-300 rounded text-base-content/60"
+                  title="Switch to Micro Mode"
+                >
+                  <Minimize2 size={16} />
                 </button>
                 <button 
                   onClick={() => setIsActive(false)} 
@@ -218,11 +270,18 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                  </button>
                  <button 
-                   onClick={() => setIsDocked(true)} 
+                   onClick={() => setDisplayMode('docked')} 
                    className="p-1 hover:bg-base-300 rounded text-base-content/60"
                    title="Dock (Non-Intrusive Mode)"
                  >
                    <Minimize2 size={16} />
+                 </button>
+                 <button 
+                   onClick={() => setDisplayMode('micro')} 
+                   className="p-1 hover:bg-base-300 rounded text-base-content/60"
+                   title="Micro Mode (Minimal Footprint)"
+                 >
+                   <Minimize2 size={14} />
                  </button>
                  <button onClick={() => setMinimized(true)} className="p-1 hover:bg-base-300 rounded text-base-content/60">
                    <span className="text-xs">_</span>
@@ -336,6 +395,26 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
               >
                 {enableIntervalAlerts ? '✓ Interval Alerts On' : 'Interval Alerts Off'}
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsTransparent(!isTransparent)}
+                  className={`flex-1 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                    isTransparent
+                      ? 'bg-info hover:bg-info/80 text-info-content'
+                      : 'bg-base-200 hover:bg-base-300 text-base-content/70'
+                  }`}
+                  title="Toggle transparent mode"
+                >
+                  {isTransparent ? '✓ Transparent' : 'Transparent'}
+                </button>
+                <button
+                  onClick={() => setDisplayMode('micro')}
+                  className="flex-1 py-1.5 text-xs rounded-lg font-medium bg-base-200 hover:bg-base-300 text-base-content/70 transition-colors"
+                  title="Switch to Micro Mode (Minimal Footprint)"
+                >
+                  Micro Mode
+                </button>
+              </div>
             </div>
           </div>
         )}
