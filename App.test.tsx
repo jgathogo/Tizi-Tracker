@@ -237,4 +237,93 @@ describe('Dashboard Rendering', () => {
     // Should still render dashboard
     expect(screen.getByText(/Tizi Tracker/i)).toBeInTheDocument();
   });
+
+  /**
+   * Regression test: ensure next Workout B preview pulls weights from the most recent
+   * occurrence of each exercise across ALL history, not just the latest workout.
+   *
+   * Scenario (similar to the screenshots):
+   * - Most recent workout is A (Squat / Bench / Row)
+   * - Previous workout is B (Squat / Overhead Press / Deadlift)
+   * - currentWeights have OHP / Deadlift at initial values, but history shows higher.
+   *
+   * Expectation:
+   * - Overhead Press shows 40kg (failed sets, so retry same weight)
+   * - Deadlift shows 55kg (50kg all 5s on attempt 2/2, so progress by 5kg)
+   */
+  it('should derive next Workout B weights from full A/B history', () => {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const workoutBDate = new Date(now - 3 * dayMs).toISOString();
+    const workoutADate = new Date(now - 1 * dayMs).toISOString();
+
+    const mockUser: UserProfile = {
+      currentWeights: {
+        // Deliberately wrong / initial values – should be corrected from history
+        'Squat': 20,
+        'Bench Press': 20,
+        'Barbell Row': 30,
+        'Overhead Press': 20,
+        'Deadlift': 40
+      },
+      nextWorkout: 'B',
+      history: [
+        // Most recent workout: A
+        {
+          id: '2',
+          date: workoutADate,
+          type: 'A',
+          exercises: [
+            { name: 'Squat', weight: 60, sets: [5, 5, 5, 5, 5], attempt: 2 },
+            { name: 'Bench Press', weight: 40, sets: [5, 5, 5, 5, 5], attempt: 2 },
+            { name: 'Barbell Row', weight: 40, sets: [5, 5, 5, 5, 5], attempt: 2 }
+          ],
+          completed: true,
+          startTime: now - 3600000,
+          endTime: now - 3000000,
+          notes: ''
+        } as WorkoutSessionData,
+        // Previous workout: B (contains OHP / Deadlift)
+        {
+          id: '1',
+          date: workoutBDate,
+          type: 'B',
+          exercises: [
+            { name: 'Squat', weight: 60, sets: [5, 5, 5, 5, 5], attempt: 1 },
+            { name: 'Overhead Press', weight: 40, sets: [5, 3, 5, 1, 1], attempt: 1 },
+            { name: 'Deadlift', weight: 50, sets: [5, 5, 5, 5, 5], attempt: 2 }
+          ],
+          completed: true,
+          startTime: now - 7200000,
+          endTime: now - 6600000,
+          notes: ''
+        } as WorkoutSessionData
+      ],
+      unit: 'kg',
+      repeatCount: {
+        'Squat': 2,
+        'Bench Press': 2,
+        'Barbell Row': 2,
+        'Overhead Press': 2,
+        'Deadlift': 2
+      },
+      weightIncrements: {
+        'Squat': 2.5,
+        'Bench Press': 2.5,
+        'Barbell Row': 2.5,
+        'Overhead Press': 2.5,
+        'Deadlift': 5
+      }
+    };
+
+    localStorage.setItem('tizi_tracker_data', JSON.stringify(mockUser));
+
+    render(<App />);
+
+    // Quick Start card should show Workout B with the derived weights
+    expect(screen.getByText(/Workout B/i)).toBeInTheDocument();
+    expect(screen.getByText(/Overhead Press - 40kg/i)).toBeInTheDocument();
+    expect(screen.getByText(/Deadlift - 55kg/i)).toBeInTheDocument();
+  });
 });

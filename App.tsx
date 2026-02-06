@@ -167,35 +167,50 @@ export default function App() {
     // Recalculate weights if needed
     const recalculatedWeights = needsWeightsRecalculation ? { ...userData.currentWeights } : userData.currentWeights;
     const recalculatedAttempts = needsWeightsRecalculation ? { ...(userData.exerciseAttempts || {}) } : (userData.exerciseAttempts || {});
-
+    
     if (needsWeightsRecalculation) {
       console.log('🔧 Tizi Tracker: Recalculating currentWeights from history (detected incorrect values)...');
       
-      // For each exercise in the most recent workout, calculate what the current weight should be
-      mostRecentWorkout.exercises.forEach(ex => {
-        const workoutWeight = ex.weight;
-        const allSetsDone = ex.sets.every(r => r === 5);
-        const workoutAttempt = ex.attempt || 1;
-        const repeatCount = userData.repeatCount?.[ex.name] ?? 2;
-
+      // For each standard exercise, find its most recent occurrence across ALL completed workouts
+      Object.keys(INITIAL_STATE.currentWeights).forEach(exerciseName => {
+        // Look backwards through completed workouts (already sorted most recent first)
+        let lastExerciseData: ExerciseSession | null = null;
+        for (const workout of completedWorkouts) {
+          const exercise = workout.exercises.find(ex => ex.name === exerciseName);
+          if (exercise) {
+            lastExerciseData = exercise;
+            break; // Found the most recent occurrence
+          }
+        }
+        
+        // If we've never seen this exercise in history, leave its current weight/attempt as-is
+        if (!lastExerciseData) {
+          return;
+        }
+        
+        const workoutWeight = lastExerciseData.weight;
+        const allSetsDone = lastExerciseData.sets.every(r => r === 5);
+        const workoutAttempt = lastExerciseData.attempt || 1;
+        const repeatCount = userData.repeatCount?.[exerciseName] ?? 2;
+        
         if (allSetsDone && workoutAttempt >= repeatCount) {
           // Should have progressed after this workout
-          const defaultIncrement = ex.name === 'Deadlift' ? 5 : 2.5;
-          const increment = userData.weightIncrements?.[ex.name] ?? defaultIncrement;
-          recalculatedWeights[ex.name] = workoutWeight + increment;
-          recalculatedAttempts[ex.name] = 1;
+          const defaultIncrement = exerciseName === 'Deadlift' ? 5 : 2.5;
+          const increment = userData.weightIncrements?.[exerciseName] ?? defaultIncrement;
+          recalculatedWeights[exerciseName] = workoutWeight + increment;
+          recalculatedAttempts[exerciseName] = 1;
         } else if (allSetsDone) {
           // Same weight, next attempt
-          recalculatedWeights[ex.name] = workoutWeight;
-          recalculatedAttempts[ex.name] = workoutAttempt + 1;
+          recalculatedWeights[exerciseName] = workoutWeight;
+          recalculatedAttempts[exerciseName] = workoutAttempt + 1;
         } else {
           // Keep same weight (workout wasn't fully successful)
-          recalculatedWeights[ex.name] = workoutWeight;
-          recalculatedAttempts[ex.name] = workoutAttempt;
+          recalculatedWeights[exerciseName] = workoutWeight;
+          recalculatedAttempts[exerciseName] = workoutAttempt;
         }
       });
-
-      console.log('✅ Tizi Tracker: Recalculated weights from most recent workout:', recalculatedWeights);
+      
+      console.log('✅ Tizi Tracker: Recalculated weights from history:', recalculatedWeights);
     }
 
     // Return updated user data
