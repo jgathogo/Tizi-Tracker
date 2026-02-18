@@ -1116,7 +1116,7 @@ export default function App() {
   const renderActiveSession = () => {
       if (!activeSession) return null;
       return (
-        <div className="max-w-2xl mx-auto p-4 pb-32">
+        <div className="max-w-2xl mx-auto p-4 pb-48">
              <div className="flex justify-between items-center mb-6">
                 <div>
                     <h2 className="text-2xl font-bold text-base-content">
@@ -1181,7 +1181,7 @@ export default function App() {
                 />
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 backdrop-blur border-t border-base-300 bg-base-100/90 flex justify-center z-40">
+            <div className="fixed bottom-[72px] left-0 right-0 p-4 backdrop-blur border-t border-base-300 bg-base-100/90 flex justify-center z-40">
                 <button 
                     onClick={finishWorkout}
                     className="w-full max-w-md bg-success hover:bg-success/80 text-success-content py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all"

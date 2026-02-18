@@ -3,7 +3,7 @@ name: Bug Report
 about: Create a report to help us improve
 title: '[BUG] '
 labels: bug
-assignees: ''
+assignees: jgathogo
 ---
 
 ## Description
@@ -20,6 +20,12 @@ What you expected to happen.
 
 ## Actual Behavior
 What actually happened.
+
+## Technical Cause (if known)
+Any insight into what's causing the issue (e.g., conflicting CSS classes, state management, etc.)
+
+## Proposed Fix (if known)
+Suggested approach to resolve the issue.
 
 ## Screenshots
 If applicable, add screenshots to help explain your problem.
@@ -38,4 +44,3 @@ Paste console errors here
 
 ## Additional Context
 Add any other context about the problem here.
-
