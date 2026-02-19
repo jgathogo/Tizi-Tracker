@@ -192,6 +192,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <hr className="border-base-300" />
 
+          {/* Rest Timer */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/70">Rest Timer</h4>
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-base-300 bg-base-200 hover:bg-base-300 transition-all cursor-pointer">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary checkbox-sm"
+                checked={user.restTimerStartMinimized ?? false}
+                onChange={(e) => onUpdate({ ...user, restTimerStartMinimized: e.target.checked })}
+              />
+              <span className="text-sm text-base-content">
+                Start timer minimized (smaller footprint when it auto-starts after a set)
+              </span>
+            </label>
+          </div>
+
+          <hr className="border-base-300" />
+
           {/* Theme Selector Section */}
           <div className="space-y-3">
             <h4 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-base-content/70`}>

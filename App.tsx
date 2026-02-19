@@ -12,12 +12,13 @@ import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
 import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
 import { Logo } from './components/Logo';
-import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle, Flame } from 'lucide-react';
 import { getWeightPerSide } from './utils/plateCalculator';
 import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSinceLastBackup } from './utils/backup';
 import { calculateRestDuration } from './utils/restTimerUtils';
 import { getNextWorkoutDate } from './utils/workoutUtils';
 import { analyzeWorkoutPattern } from './utils/scheduleUtils';
+import { getMotivationSummary } from './utils/motivationUtils';
 import { calculateProgression } from './utils/progressionUtils';
 import { applyTheme, getStoredTheme, initializeTheme, type Theme } from './utils/themeColors';
 import { AuthModal } from './components/AuthModal';
@@ -28,6 +29,8 @@ import type { User as FirebaseUser } from 'firebase/auth';
 // --- CONFIGURATION ---
 // Change this variable to rename the app throughout the UI.
 const APP_NAME = "Tizi Tracker";
+
+const ACTIVE_SESSION_KEY = 'tizi_tracker_active_session';
 
 const INITIAL_STATE: UserProfile = {
   currentWeights: {
@@ -71,7 +74,17 @@ const PROGRAMS = {
 export default function App() {
   const [user, setUser] = useState<UserProfile>(INITIAL_STATE);
   const [activeTab, setActiveTab] = useState<'workout' | 'history' | 'progress'>('workout');
-  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(null);
+  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(() => {
+    try {
+      const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as WorkoutSessionData;
+      if (!parsed?.id || !parsed?.exercises?.length || parsed.completed) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  });
   
   // Rest timer state - supports dynamic duration and type
   const [restTimerConfig, setRestTimerConfig] = useState<{
@@ -375,6 +388,30 @@ export default function App() {
       console.error("❌ Tizi Tracker: Failed to save data", e);
     }
   }, [user]);
+
+  // Persist active session so it survives refresh; clear when no active workout
+  useEffect(() => {
+    if (activeSession) {
+      try {
+        localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeSession));
+      } catch (e) {
+        console.error("❌ Tizi Tracker: Failed to save active session", e);
+      }
+    } else {
+      localStorage.removeItem(ACTIVE_SESSION_KEY);
+    }
+  }, [activeSession]);
+
+  // Warn before leaving/closing when an active workout is in progress
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (activeSession) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [activeSession]);
 
   const startWorkout = (type: WorkoutType) => {
     let exercises: ExerciseSession[] = [];
@@ -960,6 +997,45 @@ export default function App() {
          </div>
        )}
 
+       {/* Weekly goal & streak */}
+       {(() => {
+         const motivation = getMotivationSummary(user.history, user.schedule);
+         const goal = motivation.weeklyGoal;
+         const done = motivation.workoutsThisWeek;
+         if (goal <= 0) return null;
+         return (
+           <div className="flex flex-wrap items-center gap-4 mb-4 p-4 rounded-2xl border border-base-300 bg-base-200/70">
+             <div className="flex items-center gap-2">
+               <span className="text-sm font-bold text-base-content/70 uppercase tracking-wider">This week</span>
+               <div className="flex gap-1">
+                 {Array.from({ length: goal }, (_, i) => (
+                   <span
+                     key={i}
+                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                       i < done ? 'bg-success text-success-content' : 'bg-base-300 text-base-content/50'
+                     }`}
+                     title={i < done ? 'Workout completed' : 'Pending'}
+                   >
+                     {i < done ? '✓' : i + 1}
+                   </span>
+                 ))}
+               </div>
+               <span className="text-sm text-base-content/70">{done}/{goal}</span>
+             </div>
+             {(motivation.sessionStreak > 0 || motivation.weeklyStreak > 0) && (
+               <div className="flex items-center gap-2 text-warning">
+                 <Flame size={18} />
+                 <span className="text-sm font-bold">
+                   {motivation.sessionStreak > 0 && `${motivation.sessionStreak} workout streak`}
+                   {motivation.sessionStreak > 0 && motivation.weeklyStreak > 0 && ' · '}
+                   {motivation.weeklyStreak > 0 && `${motivation.weeklyStreak} week streak`}
+                 </span>
+               </div>
+             )}
+           </div>
+         );
+       })()}
+
        {/* Recent Workout Card */}
        {recentWorkout && (
          <div className="rounded-2xl p-5 border border-base-300 bg-base-200 mb-4">
@@ -1276,6 +1352,7 @@ export default function App() {
       <RestTimer 
         initialSeconds={restTimerConfig.duration} 
         autoStart={restTimerConfig.autoStart}
+        startMinimized={user.restTimerStartMinimized ?? false}
         theme={theme}
         key={`${restTimerConfig.duration}-${restTimerConfig.type}`}
       />
@@ -1358,6 +1435,10 @@ export default function App() {
           unit={user.unit}
           schedule={user.schedule}
           userName={user.name}
+          motivationAfter={getMotivationSummary(
+            [completedWorkout.workout, ...user.history],
+            user.schedule
+          )}
         />
       )}
 

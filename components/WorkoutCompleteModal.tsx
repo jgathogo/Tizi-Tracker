@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Trophy, Flame, Calendar, CheckCircle, Dumbbell } from 'lucide-react';
 import { WorkoutSessionData, WorkoutType, WorkoutSchedule } from '../types';
 import { calculateCalories, getNextWorkoutDate } from '../utils/workoutUtils';
+import type { MotivationSummary } from '../utils/motivationUtils';
 
 interface WorkoutCompleteModalProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface WorkoutCompleteModalProps {
   unit: 'kg' | 'lb';
   schedule?: WorkoutSchedule;
   userName?: string;
+  /** Motivation summary after this workout (for streak/weekly goal messages) */
+  motivationAfter?: MotivationSummary;
 }
 
 
@@ -40,7 +43,8 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
   nextWorkout,
   unit,
   schedule,
-  userName
+  userName,
+  motivationAfter
 }) => {
   if (!isOpen || !workout) return null;
 
@@ -58,6 +62,14 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
     return vol + (totalReps * ex.weight);
   }, 0);
 
+  const subtitle = motivationAfter
+    ? motivationAfter.weeklyGoalMet
+      ? `Weekly goal: ${motivationAfter.workoutsThisWeek}/${motivationAfter.weeklyGoal} complete! Enjoy your rest. 🎯`
+      : motivationAfter.sessionStreak >= 2
+        ? `That's ${motivationAfter.sessionStreak} in a row! You're on fire! 🔥`
+        : 'Great job finishing your session!'
+    : 'Great job finishing your session!';
+
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
       <div className="bg-base-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl border border-base-300 max-h-[90vh] flex flex-col">
@@ -71,7 +83,7 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
               <h3 className="text-2xl font-bold text-base-content">
                 {userName ? `Great job, ${userName}! 🎉` : 'Workout Complete! 🎉'}
               </h3>
-              <p className="text-base-content/60 text-sm">Great job finishing your session!</p>
+              <p className="text-base-content/60 text-sm">{subtitle}</p>
             </div>
           </div>
           <button
@@ -143,6 +155,22 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
               })}
             </div>
           </div>
+
+          {/* Weekly goal crushed banner */}
+          {motivationAfter?.weeklyGoalMet && (
+            <div className="bg-success/20 border border-success/50 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2 bg-success/30 rounded-lg">
+                <Trophy className="text-success" size={24} />
+              </div>
+              <div>
+                <div className="font-bold text-base-content">Weekly goal crushed!</div>
+                <div className="text-sm text-base-content/80">
+                  You hit your {motivationAfter.weeklyGoal}-workout target this week.
+                  {motivationAfter.weeklyStreak > 0 && ` ${motivationAfter.weeklyStreak} week streak! 🔥`}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">

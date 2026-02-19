@@ -77,4 +77,4 @@
     - `agra_chroma_dump_20260218_113010.md`  
   So they are no longer tracked; files remain on your machine.
 
-After you commit and push these changes, the sensitive files will no longer be in the public repo. They will still exist in past commits (history). If you need to purge them from history, use `git filter-repo` or BFG and then force-push; that rewrites history and anyone with a clone would need to re-clone.
+**History rewrite completed:** The CSV and chroma dump have been removed from all commits using `git filter-branch`. To update the remote, run: `git push --force-with-lease origin main`. Anyone with an existing clone should re-clone or rebase onto the new history.

@@ -7,16 +7,18 @@ import type { Theme } from '../utils/themeColors';
 interface RestTimerProps {
   initialSeconds?: number;
   autoStart?: boolean;
+  /** When true, timer starts in minimized (bubble) state when auto-started after a set */
+  startMinimized?: boolean;
   onComplete?: () => void;
   theme?: Theme;
 }
 
 type DisplayMode = 'floating' | 'docked' | 'micro';
 
-export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoStart = false, onComplete, theme = 'dark' }) => {
+export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoStart = false, startMinimized = false, onComplete, theme = 'dark' }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isActive, setIsActive] = useState(autoStart);
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(startMinimized && autoStart);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('floating');
   const [dockPosition, setDockPosition] = useState<'top' | 'bottom'>('bottom');
   const [isMuted, setIsMuted] = useState(false);
@@ -79,10 +81,11 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
      if(autoStart) {
          setSeconds(initialSeconds);
          setIsActive(true);
+         if (startMinimized) setMinimized(true);
          hasTriggeredOnCompleteRef.current = false; // Reset onComplete flag for new timer
          lastIntervalAlertRef.current = null; // Reset interval alert tracking
      }
-  }, [autoStart, initialSeconds]); // Reset when initialSeconds changes usually implies new set
+  }, [autoStart, initialSeconds, startMinimized]); // Reset when initialSeconds changes usually implies new set
 
   // Request notification permission on mount (only once)
   useEffect(() => {
