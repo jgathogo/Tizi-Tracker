@@ -19,6 +19,10 @@ dist-ssr
 .env.production
 .env.development
 
+# Personal / sensitive data - do not commit health or PII exports
+*.csv
+*chroma*dump*.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
