@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tizi Health Sync</string>
+    <!-- Replace with your Firebase Web Client ID from Firebase Console > Project Settings > Your apps > Web app -->
+    <string name="default_web_client_id" translatable="false">YOUR_WEB_CLIENT_ID</string>
+</resources>

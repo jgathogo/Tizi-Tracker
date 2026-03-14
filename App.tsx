@@ -12,7 +12,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
 import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
 import { Logo } from './components/Logo';
-import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle, Flame } from 'lucide-react';
+import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle, Flame, Zap, Target, Trophy } from 'lucide-react';
 import { getWeightPerSide } from './utils/plateCalculator';
 import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSinceLastBackup } from './utils/backup';
 import { calculateRestDuration } from './utils/restTimerUtils';
@@ -1003,33 +1003,60 @@ export default function App() {
          const goal = motivation.weeklyGoal;
          const done = motivation.workoutsThisWeek;
          if (goal <= 0) return null;
+         const remaining = Math.max(0, goal - done);
+         const goalMet = done >= goal;
+         const progressMsg = done === 0
+           ? 'Start your week strong!'
+           : goalMet
+             ? (done > goal ? `${done - goal} bonus workout${done - goal > 1 ? 's' : ''} this week!` : 'Weekly goal complete!')
+             : `${remaining} more to go — keep pushing!`;
          return (
-           <div className="flex flex-wrap items-center gap-4 mb-4 p-4 rounded-2xl border border-base-300 bg-base-200/70">
-             <div className="flex items-center gap-2">
-               <span className="text-sm font-bold text-base-content/70 uppercase tracking-wider">This week</span>
-               <div className="flex gap-1">
-                 {Array.from({ length: goal }, (_, i) => (
+           <div className="mb-4 rounded-2xl border border-base-300 bg-base-200/70 overflow-hidden">
+             {/* Weekly progress row */}
+             <div className="p-4 pb-3">
+               <div className="flex items-center justify-between mb-3">
+                 <div className="flex items-center gap-2">
+                   <Target size={16} className={goalMet ? 'text-success' : 'text-base-content/60'} />
+                   <span className="text-sm font-bold text-base-content/70 uppercase tracking-wider">This week</span>
+                 </div>
+                 <span className={`text-sm font-bold ${goalMet ? 'text-success' : 'text-base-content/70'}`}>{done}/{goal}</span>
+               </div>
+               <div className="flex gap-1.5 mb-2">
+                 {Array.from({ length: Math.max(goal, done) }, (_, i) => (
                    <span
                      key={i}
-                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                       i < done ? 'bg-success text-success-content' : 'bg-base-300 text-base-content/50'
+                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                       i < done
+                         ? i >= goal
+                           ? 'bg-primary/80 text-primary-content ring-2 ring-primary/40'
+                           : 'bg-success text-success-content'
+                         : 'bg-base-300 text-base-content/40'
                      }`}
-                     title={i < done ? 'Workout completed' : 'Pending'}
                    >
-                     {i < done ? '✓' : i + 1}
+                     {i < done ? <Check size={14} strokeWidth={3} /> : ''}
                    </span>
                  ))}
                </div>
-               <span className="text-sm text-base-content/70">{done}/{goal}</span>
+               <p className={`text-xs font-medium ${goalMet ? 'text-success' : 'text-base-content/60'}`}>
+                 {progressMsg}
+               </p>
              </div>
+             {/* Streak badges */}
              {(motivation.sessionStreak > 0 || motivation.weeklyStreak > 0) && (
-               <div className="flex items-center gap-2 text-warning">
-                 <Flame size={18} />
-                 <span className="text-sm font-bold">
-                   {motivation.sessionStreak > 0 && `${motivation.sessionStreak} workout streak`}
-                   {motivation.sessionStreak > 0 && motivation.weeklyStreak > 0 && ' · '}
-                   {motivation.weeklyStreak > 0 && `${motivation.weeklyStreak} week streak`}
-                 </span>
+               <div className="flex items-center gap-3 px-4 py-3 border-t border-base-300 bg-base-300/30">
+                 <Flame size={18} className="text-warning flex-shrink-0" />
+                 {motivation.sessionStreak > 0 && (
+                   <div className="flex items-center gap-1.5 bg-warning/15 px-3 py-1 rounded-full">
+                     <Zap size={13} className="text-warning" />
+                     <span className="text-xs font-bold text-warning">{motivation.sessionStreak} workout streak</span>
+                   </div>
+                 )}
+                 {motivation.weeklyStreak > 0 && (
+                   <div className="flex items-center gap-1.5 bg-success/15 px-3 py-1 rounded-full">
+                     <Trophy size={13} className="text-success" />
+                     <span className="text-xs font-bold text-success">{motivation.weeklyStreak} week streak</span>
+                   </div>
+                 )}
                </div>
              )}
            </div>
@@ -1349,13 +1376,15 @@ export default function App() {
           )}
       </main>
 
-      <RestTimer 
-        initialSeconds={restTimerConfig.duration} 
-        autoStart={restTimerConfig.autoStart}
-        startMinimized={user.restTimerStartMinimized ?? false}
-        theme={theme}
-        key={`${restTimerConfig.duration}-${restTimerConfig.type}`}
-      />
+      {activeSession && (
+        <RestTimer
+          initialSeconds={restTimerConfig.duration}
+          autoStart={restTimerConfig.autoStart}
+          startMinimized={user.restTimerStartMinimized ?? false}
+          theme={theme}
+          key={`${restTimerConfig.duration}-${restTimerConfig.type}`}
+        />
+      )}
       
       {warmupModal && (
           <WarmupCalculator 
@@ -1436,7 +1465,7 @@ export default function App() {
           schedule={user.schedule}
           userName={user.name}
           motivationAfter={getMotivationSummary(
-            [completedWorkout.workout, ...user.history],
+            user.history,
             user.schedule
           )}
         />

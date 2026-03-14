@@ -324,6 +324,24 @@ Instead of fighting PWA limitations, consider:
 
 ---
 
+## Update (March 2026): Implemented Solutions
+
+### Android Companion App (Implemented)
+
+An Android companion app has been built at `android-companion/` in this repository. It reads completed workouts from Firebase Firestore and writes them to Health Connect as ExerciseSessionRecords.
+
+- **Tech:** Kotlin, Jetpack Compose, Firebase Auth, Health Connect SDK, Room, WorkManager
+- **Sync:** One-way (Tizi Tracker -> Health Connect), automatic background sync every ~1 hour
+- **Setup:** See [android-companion/README.md](../android-companion/README.md)
+
+### Bangle.js 2 Smartwatch (Planned)
+
+A second path to Health Connect is planned via the Bangle.js 2 open-source smartwatch, which syncs to Health Connect through the Gadgetbridge Android app. This also adds wrist-based features (rest timer alerts, heart rate, set completion from wrist).
+
+- **Plan:** See [PLAN_BANGLEJS_INTEGRATION.md](./PLAN_BANGLEJS_INTEGRATION.md)
+
+---
+
 ## References
 
 - [Health Connect Documentation](https://developer.android.com/guide/health-and-fitness/health-connect)
@@ -331,14 +349,16 @@ Instead of fighting PWA limitations, consider:
 - [Terra API](https://tryterra.co/)
 - [HealthKMP Library](https://github.com/vitoksmile/HealthKMP)
 - [Google Fit Shutdown Notice](https://android-developers.googleblog.com/2024/05/evolving-health-on-android-migrating-from-google-fit-apis-to-android-health.html)
+- [Bangle.js 2](https://shop.espruino.com/banglejs2)
+- [Gadgetbridge Health Connect](https://gadgetbridge.org/basics/integrations/health-connect/)
 
 ---
 
 ## Next Steps
 
-1. Review this research with the team
-2. Update GitHub issue #1 with findings
-3. Create user survey to gauge demand
-4. Implement Phase 1 enhancements (enhanced export)
-5. Evaluate Phase 2 (third-party service) based on feedback
+1. ~~Review this research with the team~~ Done
+2. ~~Update GitHub issue #1 with findings~~ Done
+3. ~~Implement companion app for Health Connect~~ Done — see `android-companion/`
+4. Purchase Bangle.js 2 and begin smartwatch integration — see [PLAN_BANGLEJS_INTEGRATION.md](./PLAN_BANGLEJS_INTEGRATION.md)
+5. Evaluate enhanced export formats (CSV) if needed
 

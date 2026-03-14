@@ -64,6 +64,8 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
   - Automatic sync when online
   - Works offline - syncs when connection restored
   - Cross-device access to your data
+- **Health Connect Sync** (Android): Companion app writes completed workouts to Health Connect
+  - See [android-companion/README.md](./android-companion/README.md)
 
 ### 🎨 User Experience
 - **Navigation During Workouts**: Access Settings and navigate between tabs without losing workout progress
@@ -86,6 +88,10 @@ A versatile and modern fitness tracker designed for all types of activities. Whe
 - Firebase (Authentication & Cloud Firestore) - Optional cloud sync
 - Vitest (Testing framework)
 - Web Audio API (Audible alerts)
+
+### Android Companion App
+
+A lightweight native Android app (`android-companion/`) syncs completed workouts from Firebase to **Health Connect**. Built with Kotlin, Jetpack Compose, and the Health Connect SDK. See the [companion app README](./android-companion/README.md) for setup.
 
 ## Data Persistence
 
@@ -151,6 +157,24 @@ See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions on:
 - Setting up GitHub Pages
 - Accessing via local network
 - Self-hosting options
+
+## Health Connect (Android)
+
+Tizi Tracker can sync completed workouts to Android's **Health Connect** via a lightweight companion app. This makes your workouts visible in Google Health, Samsung Health, and other Health Connect-compatible apps.
+
+- See [android-companion/README.md](./android-companion/README.md) for setup
+- Requires Firebase cloud sync to be enabled
+- One-way sync: Tizi workouts appear in Health Connect automatically
+
+## Smartwatch Integration (Planned)
+
+Support for the [Bangle.js 2](https://shop.espruino.com/banglejs2) open-source smartwatch is planned. The watch connects directly to Tizi Tracker via Web Bluetooth (no native app needed) and enables:
+
+- Rest timer vibration alerts on your wrist
+- Live heart rate monitoring during workouts
+- Mark sets complete from the watch (no need to touch your phone)
+
+See the [Bangle.js Integration Plan](./docs/PLAN_BANGLEJS_INTEGRATION.md) for details.
 
 ## Debugging & Monitoring
 
