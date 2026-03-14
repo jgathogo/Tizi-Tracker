@@ -116,7 +116,7 @@ export const getNextWorkoutDate = (
           return aAdj - bAdj;
         });
         
-        const nextDay = sortedPreferred[0] || schedule.preferredDays[0] || 1;
+        const nextDay = sortedPreferred[0] ?? schedule.preferredDays[0] ?? 1;
         let daysUntilNext = nextDay <= earliestDay ? (nextDay + 7) - earliestDay : nextDay - earliestDay;
         daysUntilNext = Math.max(daysUntilNext, daysToWait); // Ensure minimum wait
         
@@ -166,7 +166,7 @@ export const getNextWorkoutDate = (
       return aAdj - bAdj;
     });
     
-    const nextDay = sortedPreferred[0] || schedule.preferredDays[0] || 1;
+    const nextDay = sortedPreferred[0] ?? schedule.preferredDays[0] ?? 1;
     const daysUntilNext = nextDay <= todayDay ? (nextDay + 7) - todayDay : nextDay - todayDay;
     
     const nextDate = new Date(today);
