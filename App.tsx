@@ -18,7 +18,7 @@ import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSin
 import { calculateRestDuration } from './utils/restTimerUtils';
 import { getNextWorkoutDate } from './utils/workoutUtils';
 import { analyzeWorkoutPattern } from './utils/scheduleUtils';
-import { getMotivationSummary, getStallMessage } from './utils/motivationUtils';
+import { getMotivationSummary, getStallMessage, pick, MSG } from './utils/motivationUtils';
 import { calculateProgression } from './utils/progressionUtils';
 import { applyTheme, getStoredTheme, initializeTheme, type Theme } from './utils/themeColors';
 import { AuthModal } from './components/AuthModal';
@@ -927,12 +927,12 @@ export default function App() {
 
     return (
     <div className="flex flex-col h-full max-w-2xl mx-auto p-4 pt-8">
-       <header className="mb-8 flex justify-between items-start">
+       <header className="mb-6 flex justify-between items-start">
            <div className="flex items-center gap-3">
                <Logo size={48} className="flex-shrink-0" />
                <div>
-                   <h1 className="text-3xl font-bold mb-2 text-base-content">{APP_NAME}</h1>
-                   <p className="text-base-content/70">
+                   <h1 className="text-3xl font-bold mb-1 text-base-content">{APP_NAME}</h1>
+                   <p className="text-base-content/70 text-sm">
                      Log your progress, whatever the activity.
                    </p>
                </div>
@@ -959,6 +959,37 @@ export default function App() {
                </button>
            </div>
        </header>
+
+       {/* Motivational greeting with streak & monthly stats */}
+       {(() => {
+         const m = getMotivationSummary(user.history, user.schedule);
+         const greeting = user.name ? `Hey ${user.name}!` : "Hey!";
+         const parts: string[] = [];
+         if (m.workoutsThisMonth > 0) {
+           parts.push(`${m.workoutsThisMonth} workout${m.workoutsThisMonth === 1 ? '' : 's'} in ${m.currentMonthName}`);
+         }
+         if (m.sessionStreak > 0) {
+           parts.push(`${m.sessionStreak} day streak`);
+         }
+         const statsLine = parts.length > 0 ? parts.join(' · ') : null;
+         const cta = m.sessionStreak > 7
+           ? pick(MSG.streakHot)
+           : m.workoutsThisMonth > 0
+             ? pick(MSG.dashboardCta)
+             : pick(MSG.monthFresh);
+         return (
+           <div className="mb-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-4 border border-primary/20">
+             <div className="text-lg font-bold text-base-content">{greeting}</div>
+             {statsLine && (
+               <div className="flex items-center gap-2 mt-1">
+                 {m.sessionStreak > 0 && <Flame size={14} className="text-warning" />}
+                 <span className="text-sm font-semibold text-base-content/80">{statsLine}</span>
+               </div>
+             )}
+             <p className="text-sm text-base-content/60 mt-1">{cta}</p>
+           </div>
+         );
+       })()}
 
        {/* Backup Reminder */}
        {shouldShowBackupReminder() && (
@@ -999,10 +1030,10 @@ export default function App() {
          const remaining = Math.max(0, goal - done);
          const goalMet = done >= goal;
          const progressMsg = done === 0
-           ? 'Start your week strong!'
+           ? pick(MSG.weekFresh)
            : goalMet
-             ? (done > goal ? `${done - goal} bonus workout${done - goal > 1 ? 's' : ''} this week!` : 'Weekly goal complete!')
-             : `${remaining} more to go — keep pushing!`;
+             ? (done > goal ? `${done - goal} bonus workout${done - goal > 1 ? 's' : ''} this week!` : pick(MSG.weeklyGoalMet))
+             : `${remaining} more to go — ${pick(MSG.weeklyPush)}`;
          return (
            <div className="mb-4 rounded-2xl border border-base-300 bg-base-200/70 overflow-hidden">
              {/* Weekly progress row */}

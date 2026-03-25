@@ -6,42 +6,164 @@ export interface MotivationSummary {
   weeklyGoalMet: boolean;
   sessionStreak: number;
   weeklyStreak: number;
+  workoutsThisMonth: number;
+  currentMonthName: string;
 }
 
 export type SessionOutcome = 'perfect' | 'partial' | 'tough';
 
-const FAILURE_ENCOURAGEMENTS = [
-  "Failing means you're pushing your limits. That's exactly what builds strength.",
-  "Every strong lifter has failed thousands of reps. You're in good company.",
-  "The bar didn't move today. But you did — you showed up.",
-  "Missed reps are data, not defeat. Your body is telling you where the edge is.",
-  "Tough sessions build tough lifters. This is part of the process.",
-  "Progress isn't always linear. What matters is you keep showing up.",
-  "A bad day in the gym still beats a day on the couch.",
-  "Failure is how the program finds your limits so it can push past them.",
-];
+// ---------------------------------------------------------------------------
+// Centralized message pools — every motivational string in the app lives here
+// ---------------------------------------------------------------------------
 
-const DELOAD_ENCOURAGEMENTS = [
-  "Deloads aren't setbacks — they're launchpads. You'll come back stronger.",
-  "Rebuilding takes 2–3 sessions. Lifters often smash their old max after a deload.",
-  "Think of this as sharpening the axe. The weight will move easier when you return.",
-  "Every plateau is a springboard in disguise. Time to build momentum.",
-];
+export const MSG = {
+  // After a perfect session (all 5s on every exercise)
+  perfectSession: [
+    "Nailed every rep! You're dialed in.",
+    "Clean sweep — all sets complete. Keep that energy going!",
+    "Perfect session! The weights are moving well.",
+    "All reps hit. The gains train keeps rolling!",
+    "Textbook workout. That's how it's done.",
+    "Every set, every rep. You made it look easy.",
+    "Nothing left on the table. Solid work!",
+  ],
 
-const PERFECT_SESSION_MESSAGES = [
-  "Nailed every rep! You're dialed in.",
-  "Clean sweep — all sets complete. Keep that energy going!",
-  "Perfect session! The weights are moving well.",
-  "All reps hit. The gains train keeps rolling!",
-];
+  // After a session with missed reps
+  failureSession: [
+    "Failing means you're pushing your limits. That's exactly what builds strength.",
+    "Every strong lifter has failed thousands of reps. You're in good company.",
+    "The bar didn't move today. But you did — you showed up.",
+    "Missed reps are data, not defeat. Your body is telling you where the edge is.",
+    "Tough sessions build tough lifters. This is part of the process.",
+    "Progress isn't always linear. What matters is you keep showing up.",
+    "A bad day in the gym still beats a day on the couch.",
+    "Failure is how the program finds your limits so it can push past them.",
+    "The reps you grind through matter more than the easy ones.",
+    "Strength is built in the struggle, not the cruise.",
+  ],
+
+  // After a deload is triggered
+  deload: [
+    "Deloads aren't setbacks — they're launchpads. You'll come back stronger.",
+    "Rebuilding takes 2–3 sessions. Lifters often smash their old max after a deload.",
+    "Think of this as sharpening the axe. The weight will move easier when you return.",
+    "Every plateau is a springboard in disguise. Time to build momentum.",
+    "Smart training means knowing when to step back. This is that moment.",
+    "Reset, rebuild, surpass. That's the cycle — and you're right on track.",
+  ],
+
+  // Dashboard greeting / pre-workout pump-up
+  dashboardCta: [
+    "Let's crush it today!",
+    "Time to get after it!",
+    "Let's make it count!",
+    "Keep the momentum going!",
+    "Another day, another chance to be stronger.",
+    "The iron is waiting. Let's go!",
+    "Consistency beats everything. Show up again.",
+    "You know the drill — let's get to work.",
+    "Today's effort is tomorrow's strength.",
+  ],
+
+  // When the streak is strong (> 7 days)
+  streakHot: [
+    "You're on fire — keep it going!",
+    "Unstoppable. Don't break the chain!",
+    "That streak is looking dangerous. Keep stacking days!",
+    "Consistency is your superpower right now.",
+    "This is what dedication looks like.",
+  ],
+
+  // First workout of the month / no workouts yet
+  monthFresh: [
+    "Start strong this month!",
+    "New month, new gains. Let's set the pace!",
+    "Fresh month — time to make it your best one yet.",
+    "Day one of the month. Let's build something great.",
+  ],
+
+  // Weekly goal met
+  weeklyGoalMet: [
+    "Weekly goal complete! 🎯",
+    "Target hit for the week! Well done. 🎯",
+    "Week's work: done. You earned your rest. 🎯",
+  ],
+
+  // Weekly goal in progress
+  weeklyPush: [
+    "keep pushing!",
+    "you've got this!",
+    "almost there!",
+    "stay on track!",
+    "don't stop now!",
+  ],
+
+  // Start of week, no workouts yet
+  weekFresh: [
+    "Start your week strong!",
+    "New week — time to set the tone!",
+    "Monday mindset: get it done.",
+    "A fresh week of gains awaits.",
+  ],
+
+  // Completion modal footer buttons
+  footerPerfect: [
+    "Awesome! Let's Go! 💪",
+    "Crushed it! 💪",
+    "On to the next one! 💪",
+    "That's how it's done! 💪",
+  ],
+  footerFailure: [
+    "Showing Up Is Winning 💪",
+    "Still Got After It 💪",
+    "Tough Days Build Strength 💪",
+    "Grind Now, Grow Later 💪",
+  ],
+  footerDeload: [
+    "I'll Come Back Stronger 🔥",
+    "Reset & Rebuild 🔥",
+    "Sharpen The Axe 🔥",
+    "Bounce Back Mode 🔥",
+  ],
+
+  // Stall messages for dashboard next-workout preview
+  stall: {
+    1: [
+      "One off day doesn't define you",
+      "Bad sessions happen — you'll get it next time",
+      "Shake it off and try again",
+    ],
+    2: [
+      "Deload safety net ready if needed",
+      "One more shot before the reset — give it everything",
+      "Dig deep — you might surprise yourself",
+    ],
+  } as Record<number, string[]>,
+
+  // Completion modal titles
+  titlePerfect: [
+    "Great job",
+    "Nailed it",
+    "Beast mode",
+    "Solid work",
+  ],
+  titleFailure: [
+    "Tough one",
+    "Still showed up",
+    "Gritty session",
+    "Battle tested",
+  ],
+};
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/**
- * Determines the overall outcome of a workout session.
- */
+/** Pick a random message from any pool by key. */
+export function pick(pool: string[]): string {
+  return pickRandom(pool);
+}
+
 export function getSessionOutcome(exercises: ExerciseSession[]): SessionOutcome {
   const results = exercises.map(ex => ex.sets.every(r => r === 5));
   if (results.every(Boolean)) return 'perfect';
@@ -49,47 +171,29 @@ export function getSessionOutcome(exercises: ExerciseSession[]): SessionOutcome 
   return 'tough';
 }
 
-/**
- * Returns a context-aware encouragement message based on session outcome.
- */
 export function getSessionEncouragement(outcome: SessionOutcome): string {
   switch (outcome) {
-    case 'perfect': return pickRandom(PERFECT_SESSION_MESSAGES);
-    case 'partial': return pickRandom(FAILURE_ENCOURAGEMENTS);
-    case 'tough': return pickRandom(FAILURE_ENCOURAGEMENTS);
+    case 'perfect': return pick(MSG.perfectSession);
+    case 'partial': return pick(MSG.failureSession);
+    case 'tough': return pick(MSG.failureSession);
   }
 }
 
-/**
- * Returns an encouraging deload message.
- */
 export function getDeloadEncouragement(): string {
-  return pickRandom(DELOAD_ENCOURAGEMENTS);
+  return pick(MSG.deload);
 }
 
-/**
- * Returns a contextual tip based on which set failed in an exercise.
- * Early failures (sets 1-2) suggest recovery issues.
- * Late failures (sets 4-5) are normal and expected.
- */
 export function getFailureContextTip(failedSetIndex: number, totalSets: number): string | null {
   if (totalSets <= 1) return null;
-  const isEarly = failedSetIndex < 2;
-  if (isEarly) {
+  if (failedSetIndex < 2) {
     return "Early-set miss — check your sleep, food, and warmup.";
   }
   return "Late-set miss is normal — you're training at your limit.";
 }
 
-/**
- * Returns a short stall encouragement for the dashboard preview.
- */
 export function getStallMessage(failureCount: number): string {
-  switch (failureCount) {
-    case 1: return "One off day doesn't define you";
-    case 2: return "Deload safety net ready if needed";
-    default: return "Keep pushing";
-  }
+  const pool = MSG.stall[failureCount];
+  return pool ? pick(pool) : "Keep pushing";
 }
 
 /**
@@ -122,6 +226,14 @@ export function getMotivationSummary(
     (w) => new Date(w.date) >= thisWeekStart
   ).length;
   const weeklyGoalMet = workoutsThisWeek >= weeklyGoal;
+
+  // Monthly count
+  const currentMonthName = now.toLocaleString('en-US', { month: 'long' });
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  monthStart.setHours(0, 0, 0, 0);
+  const workoutsThisMonth = completed.filter(
+    (w) => new Date(w.date) >= monthStart
+  ).length;
 
   // Workout streak: consecutive workouts without missing a scheduled window.
   // Max allowed gap between workouts is based on frequency (e.g. 3x/week → ~3 day max gap).
@@ -183,5 +295,7 @@ export function getMotivationSummary(
     weeklyGoalMet,
     sessionStreak,
     weeklyStreak,
+    workoutsThisMonth,
+    currentMonthName,
   };
 }

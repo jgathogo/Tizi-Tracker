@@ -3,7 +3,7 @@ import { X, Trophy, Flame, Calendar, CheckCircle, AlertTriangle, TrendingDown, D
 import { WorkoutSessionData, WorkoutType, WorkoutSchedule } from '../types';
 import { calculateCalories, getNextWorkoutDate } from '../utils/workoutUtils';
 import type { MotivationSummary } from '../utils/motivationUtils';
-import { getSessionOutcome, getSessionEncouragement, getDeloadEncouragement } from '../utils/motivationUtils';
+import { getSessionOutcome, getSessionEncouragement, getDeloadEncouragement, pick, MSG } from '../utils/motivationUtils';
 
 export interface DeloadNotification {
   exercise: string;
@@ -61,18 +61,22 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
       title: userName ? `Plateau hit, ${userName}` : 'Plateau Detected',
       emoji: '🔄',
     };
-    if (outcome === 'perfect') return {
-      gradient: 'bg-gradient-to-r from-success/20 to-primary/20',
-      icon: <Trophy className="text-success" size={28} />,
-      iconBg: 'bg-success/20',
-      title: userName ? `Great job, ${userName}!` : 'Workout Complete!',
-      emoji: '🎉',
-    };
+    if (outcome === 'perfect') {
+      const label = pick(MSG.titlePerfect);
+      return {
+        gradient: 'bg-gradient-to-r from-success/20 to-primary/20',
+        icon: <Trophy className="text-success" size={28} />,
+        iconBg: 'bg-success/20',
+        title: userName ? `${label}, ${userName}!` : 'Workout Complete!',
+        emoji: '🎉',
+      };
+    }
+    const label = pick(MSG.titleFailure);
     return {
       gradient: 'bg-gradient-to-r from-warning/15 to-primary/20',
       icon: <Shield className="text-primary" size={28} />,
       iconBg: 'bg-primary/20',
-      title: userName ? `Tough one, ${userName}` : 'Session Logged',
+      title: userName ? `${label}, ${userName}` : 'Session Logged',
       emoji: '💪',
     };
   };
@@ -85,7 +89,7 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
       ? motivationAfter.weeklyGoalMet
         ? `Weekly goal: ${motivationAfter.workoutsThisWeek}/${motivationAfter.weeklyGoal} complete! Enjoy your rest. 🎯`
         : motivationAfter.sessionStreak >= 2
-          ? `That's ${motivationAfter.sessionStreak} in a row! You're on fire! 🔥`
+          ? `${motivationAfter.sessionStreak} day streak — ${pick(MSG.streakHot).toLowerCase()}`
           : encouragement
       : encouragement;
 
@@ -98,9 +102,9 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
   };
 
   const getFooterButton = () => {
-    if (hasDeloads) return { text: "I'll Come Back Stronger 🔥", gradient: 'bg-gradient-to-r from-warning to-primary' };
-    if (outcome === 'perfect') return { text: "Awesome! Let's Go! 💪", gradient: 'bg-gradient-to-r from-success to-primary' };
-    return { text: "Showing Up Is Winning 💪", gradient: 'bg-gradient-to-r from-primary to-secondary' };
+    if (hasDeloads) return { text: pick(MSG.footerDeload), gradient: 'bg-gradient-to-r from-warning to-primary' };
+    if (outcome === 'perfect') return { text: pick(MSG.footerPerfect), gradient: 'bg-gradient-to-r from-success to-primary' };
+    return { text: pick(MSG.footerFailure), gradient: 'bg-gradient-to-r from-primary to-secondary' };
   };
 
   const footer = getFooterButton();
@@ -267,6 +271,28 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Monthly & streak summary */}
+          {motivationAfter && (motivationAfter.workoutsThisMonth > 0 || motivationAfter.sessionStreak > 0) && (
+            <div className="bg-base-300/40 rounded-xl p-4 border border-base-300 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {motivationAfter.sessionStreak > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Flame size={16} className="text-warning" />
+                    <span className="text-sm font-bold text-base-content">{motivationAfter.sessionStreak} day streak</span>
+                  </div>
+                )}
+                {motivationAfter.sessionStreak > 0 && motivationAfter.workoutsThisMonth > 0 && (
+                  <span className="text-base-content/30">·</span>
+                )}
+                {motivationAfter.workoutsThisMonth > 0 && (
+                  <span className="text-sm text-base-content/70">
+                    {motivationAfter.workoutsThisMonth} in {motivationAfter.currentMonthName}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
