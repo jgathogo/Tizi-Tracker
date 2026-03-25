@@ -23,14 +23,14 @@ This happens because Firebase requires you to **whitelist** the domain/URL where
 ### Step 2: Add Domain to Firebase Console
 
 1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Select your project: **tizi** (tizi-d2ab1)
+2. Select your project
 3. Click **Authentication** in the left sidebar
-4. Click **Settings** tab (gear icon ⚙️ at the top)
+4. Click **Settings** tab
 5. Scroll down to **Authorized domains** section
 6. You'll see existing domains:
-   - `localhost` (for local development on computer)
-   - `tizi-d2ab1.firebaseapp.com` (Firebase default)
-   - `tizi-d2ab1.web.app` (Firebase default)
+   - `localhost` (for local development)
+   - `<your-project>.firebaseapp.com` (Firebase default)
+   - `<your-project>.web.app` (Firebase default)
 
 7. Click **"Add domain"** button
 8. Enter your domain (see examples below)
@@ -39,14 +39,14 @@ This happens because Firebase requires you to **whitelist** the domain/URL where
 
 #### For Local Network (Phone on same WiFi as computer):
 
-**If accessing via:** `http://192.168.100.59:3000`
+**If accessing via:** `http://192.168.x.x:3000`
 
-**Add to Firebase:** `192.168.100.59` (NO port, NO http://)
+**Add to Firebase:** `192.168.x.x` (NO port, NO http://)
 
 **Important:**
-- ✅ Add: `192.168.100.59`
-- ❌ DON'T add: `192.168.100.59:3000`
-- ❌ DON'T add: `http://192.168.100.59`
+- Add the IP address only, e.g. `192.168.x.x`
+- Do not include the port number
+- Do not include `http://`
 
 #### For Vercel Deployment:
 
@@ -62,10 +62,10 @@ This happens because Firebase requires you to **whitelist** the domain/URL where
 
 ### Step 4: Rules for Adding Domains
 
-- ✅ **Domain only** - No `http://` or `https://`
-- ✅ **No port numbers** - `192.168.100.59` not `192.168.100.59:3000`
-- ✅ **IP addresses OK** - You can add local IPs like `192.168.1.100`
-- ✅ **Subdomains OK** - `tizi-tracker.vercel.app`, `app.example.com`
+- **Domain only** - No `http://` or `https://` prefix
+- **No port numbers** - Just the hostname or IP
+- **IP addresses OK** - You can add local network IPs
+- **Subdomains OK** - e.g. `your-app.vercel.app`
 
 ### Step 5: Find Your Computer's Local IP
 
@@ -79,23 +79,23 @@ hostname -I | awk '{print $1}'
 ip addr show | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | cut -d/ -f1 | head -1
 ```
 
-This will show something like: `192.168.100.59`
+This will show your local IP address, e.g. `192.168.x.x`.
 
-**Add this IP to Firebase** (without port).
+Add this IP to Firebase (without the port).
 
 ### Step 6: Try Again
 
-1. **Clear browser cache** on your phone (optional but recommended)
-2. **Close and reopen** the app on your phone
-3. **Try signing in again**
+1. Clear browser cache on your phone (optional but recommended)
+2. Close and reopen the app
+3. Try signing in again
 
 ## Common Scenarios
 
 ### Scenario 1: Testing Locally on Phone (Same WiFi)
 
-1. Your computer's IP: `192.168.100.59`
-2. You access: `http://192.168.100.59:3000` on phone
-3. Add to Firebase: `192.168.100.59`
+1. Find your computer's local IP (see Step 5)
+2. Access `http://<your-ip>:3000` on your phone
+3. Add the IP to Firebase authorized domains
 4. Try signing in
 
 ### Scenario 2: Deployed to Vercel

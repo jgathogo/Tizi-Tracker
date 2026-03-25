@@ -1,235 +1,118 @@
 # Tizi Tracker
 
-A versatile and modern fitness tracker designed for all types of activities. Whether you are following a strict 5x5 strength program, going for a run, skipping, or doing a custom workout, Tizi Tracker helps you capture every session with ease.
+A fitness tracker built for the 5x5 strength program and general activity logging. Track your lifts, follow progressive overload, and log any workout — all from your phone's browser.
 
-## Key Features
+## Features
 
-### 🏋️ 5x5 Strength Hub
-- **Workout A/B Alternation**: Automatically tracks and alternates between Workout A (Squat, Bench Press, Barbell Row) and Workout B (Squat, Overhead Press, Deadlift)
-- **Progressive Overload**: Automatic weight progression based on successful sets
-- **Smart Failure Handling**: Automatic deload after consecutive failures to prevent plateaus
-- **Per-Exercise Settings**: Customize how many times to repeat each exercise at a weight before progressing
-- **Custom Weight Increments**: Set different weight increments per exercise (e.g., 2.5kg for Squat, 5kg for Deadlift)
-- **Attempt Tracking**: See which attempt you're on at each weight (1st, 2nd, 3rd time, etc.)
-- **Plate Calculator**: Automatically shows weight per side and plate breakdown for each exercise
+### 5x5 Strength Program
+- Workout A/B alternation (A: Squat, Bench Press, Barbell Row | B: Squat, Overhead Press, Deadlift)
+- Automatic weight progression based on completed sets
+- Per-exercise repeat count and weight increment settings
+- Attempt tracking at each weight level
+- Plate calculator showing weight per side and plate breakdown
+- Warmup calculator with progressive loading sets
 
-### 📝 Activity Logging
-- **Custom Workouts**: Create any custom activity (Skipping, Yoga, Cardio, etc.)
-- **Dynamic Exercise Addition**: Add custom exercises on the fly during workouts
-- **Notes & Tracking**: Add notes to workouts and track completion status
+### Failure Handling and Deloads
+- Tracks consecutive failures per exercise
+- Automatic 10% deload after 3 consecutive failures at the same weight
+- Context-aware feedback: early-set failures (recovery issues) vs late-set failures (normal limit)
+- Dashboard shows retry count and encouraging guidance for stalled exercises
+- Deload details shown in the workout completion summary with recovery timeline
 
-### 🤖 AI Coach
-- **Form Guidance**: Integrated Google Gemini AI provides form cues for major lifts
-- **Video Links**: AI finds and displays instructional videos for proper form
+### Motivation and Streaks
+- Workout streak tracking (calendar days of consistent training, rest-day aware)
+- Monthly workout count displayed on dashboard and after each session
+- Personalized greeting on the home page with streak and monthly stats
+- Randomized motivational messages drawn from centralized pools for variety
+- Weekly goal tracking with progress indicators
+- Context-aware completion modal: different feedback for perfect sessions, tough sessions, and deloads
 
-### 🛠️ Advanced Tools
-- **Rest Timer**: Built-in timer to track rest periods between sets
-  - Dockable mode for non-intrusive tracking
-  - Interval alerts (beep every 30 seconds)
-  - Audible alerts (bell sound when timer completes)
-  - Pause/Resume functionality
-  - Customizable duration per workout type
-- **Warmup Calculator**: Automatic warmup calculations with plate breakdown
-  - Per-session state tracking (warmup sets persist per workout)
-  - Visual completion indicators
-- **Weight Micro-Adjustments**: Fine-tune weights with small increments (+/- 1.25kg, 2.5kg, 5kg, etc.)
-- **Manual Weight Editing**: Adjust weights and attempt numbers manually anytime
-- **Smart Failure Logic**: Automatic deload after consecutive failures
-  - Tracks consecutive failures per exercise
-  - Auto-deloads when threshold is reached
-  - Prevents plateaus and helps break through sticking points
+### Activity Logging
+- Log any custom activity (running, skipping, yoga, etc.)
+- Add exercises on the fly during a workout
+- Session notes and workout timer
 
-### 📊 Analytics & Progress
-- **Progress Charts**: Visual trends showing strength progression over time using Recharts
-- **Workout History**: Complete history of all workouts with total volume calculations
-- **Next Workout Prediction**: Dashboard shows your next scheduled workout with weights and exercises
-- **Calories Estimation**: Estimated calories burned after each workout
-- **Delete Workouts**: Remove past workouts for testing or data cleanup
+### Tools
+- Rest timer with dockable, floating, and micro modes
+  - Dynamic duration based on set performance (longer rest after failed sets)
+  - Interval alerts and audible notifications
+  - Pause, resume, and manual time adjustments
+- Warmup calculator with per-session state tracking
+- Weight adjustment modal with fine-grained increments
+- AI form guide powered by Google Gemini (optional, requires API key)
 
-### ⚙️ Personalization
-- **User Profile**: Set your name, date of birth, height, and body weight
-- **Workout Schedule**: Configure workout frequency (1-7 per week), preferred days, and flexible scheduling
-- **Next Workout Date**: Automatic calculation of next workout date based on your schedule and rest requirements
-- **Personalized Messages**: Congratulations and encouragement personalized with your name
-- **Theme Customization**: Choose from 30+ beautiful themes (Dark, Light, Cupcake, Garden, Cyberpunk, and more)
-  - Instant theme switching
-  - All themes fully supported with proper contrast
-  - Theme preferences saved automatically
+### Analytics
+- Progress charts showing weight trends over time
+- Workout history with total volume and per-exercise breakdowns
+- Session status indicators (passed/failed) in history view
+- Calories estimation after each workout
+- Next workout prediction with scheduled date
 
-### 💾 Data Management
-- **Automatic Saving**: All data stored locally in browser localStorage
-- **Export/Import**: Download JSON backups and restore from backups
-- **Cloud Sync** (Optional): Sync workout data across all devices using Firebase
-  - Google Sign-In or Email/Password authentication
-  - Automatic sync when online
-  - Works offline - syncs when connection restored
-  - Cross-device access to your data
-- **Health Connect Sync** (Android): Companion app writes completed workouts to Health Connect
-  - See [android-companion/README.md](./android-companion/README.md)
+### Personalization
+- User profile (name, date of birth, height, body weight)
+- Workout schedule (frequency, preferred days, flexible mode)
+- 30+ themes via DaisyUI (dark, light, cupcake, cyberpunk, etc.)
+- Configurable rest timer behaviour
 
-### 🎨 User Experience
-- **Navigation During Workouts**: Access Settings and navigate between tabs without losing workout progress
-  - Settings button in active workout header
-  - Persistent bottom navigation bar
-  - Workout state preserved when switching tabs
-  - Visual indicator shows active workout status
-- **Theme-Aware UI**: All components adapt to selected theme with proper contrast
-  - Semantic color classes for consistent theming
-  - Accessible color combinations
-  - Smooth theme transitions
+### Data
+- Automatic save to browser localStorage
+- JSON export/import for backups
+- Auto-backup after each completed workout
+- Optional cloud sync via Firebase (Google or email sign-in)
+- Works offline; syncs when connection is restored
 
 ## Tech Stack
 
-- React 19 + TypeScript
-- Tailwind CSS 3 + DaisyUI 4 (30+ themes)
-- Lucide React Icons
-- Recharts Visualization
-- Google GenAI (Gemini API)
-- Firebase (Authentication & Cloud Firestore) - Optional cloud sync
-- Vitest (Testing framework)
-- Web Audio API (Audible alerts)
-
-### Android Companion App
-
-A lightweight native Android app (`android-companion/`) syncs completed workouts from Firebase to **Health Connect**. Built with Kotlin, Jetpack Compose, and the Health Connect SDK. See the [companion app README](./android-companion/README.md) for setup.
-
-## Data Persistence
-
-**Your data is automatically saved!** Tizi Tracker uses browser localStorage to remember:
-
-- ✅ All workout history
-- ✅ Current weights for each exercise
-- ✅ Next workout (A or B alternation)
-- ✅ Your preferences (units, etc.)
-
-**The app tracks:**
-- **Previous workouts** - See your last workout on the dashboard
-- **Next workout** - Dashboard shows your next scheduled workout with exercises, weights, and date
-- **Complete history** - View all past workouts in the History tab with total volume
-- **Progress trends** - Visual charts show your strength progression over time
-- **Per-exercise progression** - Track attempts and progression for each exercise individually
-
-**Backup your data:**
-- Settings → Export Data (downloads JSON file)
-- Settings → Import Data (restore from backup)
-
-**Cloud Sync (Optional):**
-- Settings → Cloud Sync → Sign In
-- Choose Google Sign-In or Email/Password
-- Your data automatically syncs across all devices
-- Works offline - syncs when online
-- Reset data syncs immediately to cloud
-- See [Firebase Setup Guide](./docs/FIREBASE_SETUP.md) for configuration
+- React 19, TypeScript
+- Tailwind CSS 4, DaisyUI 4
+- Recharts (charts)
+- Lucide React (icons)
+- Google GenAI / Gemini API (optional AI coach)
+- Firebase Authentication and Cloud Firestore (optional cloud sync)
+- Vitest (testing)
+- Vite (build tooling)
 
 ## Getting Started
 
-### Installation
-
 ```bash
-# Install dependencies
 npm install --legacy-peer-deps
-
-# Start development server
 npm run dev
 ```
 
-Visit `http://localhost:3000` in your browser.
+Open `http://localhost:3000` in your browser (works best on mobile).
 
-### Development
+### Running Tests
 
 ```bash
-# Run tests
-npm test              # Watch mode
-npm run test:run      # One-time run
-npm run test:coverage # With coverage
-npm run test:ui       # Visual test interface
+npm test              # watch mode
+npm run test:run      # single run
+npm run test:coverage # with coverage report
+```
 
-# Build for production
+Tests run automatically before each commit via a pre-commit hook.
+
+### Production Build
+
+```bash
 npm run build
 ```
 
-**Pre-commit Hook**: Tests run automatically before each commit to ensure code quality.
+### Deployment
 
-### Deploy to Your Phone
-
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions on:
-- Deploying to Vercel/Netlify (free hosting)
-- Setting up GitHub Pages
-- Accessing via local network
-- Self-hosting options
+See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for instructions on deploying to Vercel, Netlify, or GitHub Pages.
 
 ## Health Connect (Android)
 
-Tizi Tracker can sync completed workouts to Android's **Health Connect** via a lightweight companion app. This makes your workouts visible in Google Health, Samsung Health, and other Health Connect-compatible apps.
+A companion Android app syncs completed workouts to Health Connect (Google Health, Samsung Health, etc.). Requires Firebase cloud sync. See [android-companion/README.md](./android-companion/README.md).
 
-- See [android-companion/README.md](./android-companion/README.md) for setup
-- Requires Firebase cloud sync to be enabled
-- One-way sync: Tizi workouts appear in Health Connect automatically
+## Security
 
-## Smartwatch Integration (Planned)
-
-Support for the [Bangle.js 2](https://shop.espruino.com/banglejs2) open-source smartwatch is planned. The watch connects directly to Tizi Tracker via Web Bluetooth (no native app needed) and enables:
-
-- Rest timer vibration alerts on your wrist
-- Live heart rate monitoring during workouts
-- Mark sets complete from the watch (no need to touch your phone)
-
-See the [Bangle.js Integration Plan](./docs/PLAN_BANGLEJS_INTEGRATION.md) for details.
-
-## Debugging & Monitoring
-
-Need to debug the app on your phone or share issues with developers?
-
-- 🔍 [Remote Debugging Guide](./docs/REMOTE_DEBUGGING.md) - Connect your phone for debugging
-- 📱 Chrome Remote Debugging (Android)
-- 🍎 Safari Web Inspector (iOS)
-- 🌐 ngrok for sharing your local dev server
-- 📊 Enhanced console logging for easier troubleshooting
+- API keys are loaded from environment variables, never committed to the repo
+- Firebase config uses `import.meta.env.VITE_*` placeholders
+- `.gitignore` excludes `.env`, data exports, and build artifacts
+- See [docs/SECURITY_ASSESSMENT.md](./docs/SECURITY_ASSESSMENT.md) for the full assessment
 
 ## Contributing
 
-Found a bug? Have a feature idea? Want to help improve Tizi Tracker?
-
-- 📋 [Report Issues](https://github.com/jgathogo/Tizi-Tracker/issues)
-- 💡 [Suggest Enhancements](https://github.com/jgathogo/Tizi-Tracker/issues/new)
-- 📖 [Contributing Guide](./CONTRIBUTING.md)
-
-We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## Re-creating This App (AI Prompt)
-
-> "Build a React-based fitness logger called 'Tizi Tracker'. The app should be a versatile activity tracker with a specialized module for 5x5 lifting programs.
-> 
-> **Core Features:**
-> - 5x5 Strength Hub: Workout A/B alternation (A: Squat, Bench, Row | B: Squat, OHP, Deadlift)
-> - Custom workout logging for any activity (Skipping, Yoga, Cardio)
-> - Automatic progressive overload with per-exercise settings
-> - Per-exercise repeat count and weight increment configuration
-> - Attempt tracking (1st, 2nd, 3rd time at each weight)
-> 
-> **Dashboard:** Features a 'Quick Start' showing the next scheduled workout with exercises, weights, and date. Shows last workout summary and next workout prediction.
-> 
-> **Workout View:** Interactive exercise cards with set trackers. Include plate calculator (weight per side, plate breakdown), warmup calculator with plate breakdown, AI form guide (Gemini API), rest timer, and manual weight/attempt editing.
-> 
-> **Progression Logic:** Automatic progression when sets are completed. Per-exercise repeat count (how many times to repeat at weight before progressing). Custom weight increments per exercise (e.g., 2.5kg for most, 5kg for Deadlift). Track attempts per exercise.
-> 
-> **Personalization:**
-> - User profile (name, date of birth, height, body weight)
-> - Workout schedule (frequency per week, preferred days, flexible scheduling)
-> - Next workout date calculation based on schedule and rest requirements
-> - Personalized congratulations after workouts
-> 
-> **Analytics:** History view with total volume metrics, delete workout capability, calories estimation after workouts, progress charts using Recharts, and JSON Export/Import for backups.
-> 
-> **Cloud Sync (Optional):** Firebase authentication (Google Sign-In or Email/Password), automatic sync when online, works offline, cross-device access, reset data syncs immediately.
-> 
-> **UI:** DaisyUI theme system with 30+ themes (Dark, Light, Cupcake, Garden, Cyberpunk, etc.). High-quality rounded corners and smooth transitions. Mobile-responsive design. Settings modal with scrollable sections. Workout completion modal with personalized congratulations. Navigation accessible during active workouts. Theme-aware components with proper contrast.
-> 
-> **Testing:** Comprehensive test suite with Vitest. Pre-commit hooks ensure code quality. 144+ tests covering utilities, components, and integration flows.
-> 
-> **Recent Enhancements:**
-> - Rest timer with dockable mode, interval alerts, and audible notifications
-> - Smart failure logic with automatic deload
-> - Navigation and Settings access during active workouts
-> - Per-session warmup state tracking
-> - Full DaisyUI theme integration with 30+ themes"
+- [Report issues](https://github.com/jgathogo/Tizi-Tracker/issues)
+- [Contributing guide](./CONTRIBUTING.md)

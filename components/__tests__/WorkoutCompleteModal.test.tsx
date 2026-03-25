@@ -88,7 +88,7 @@ describe('WorkoutCompleteModal', () => {
       />
     );
 
-    expect(screen.getByText('Great job, John! 🎉')).toBeInTheDocument();
+    expect(screen.getByText(/John/)).toBeInTheDocument();
   });
 
   it('should display exercise breakdown correctly', () => {
