@@ -1,7 +1,8 @@
 import React from 'react';
-import { Info, Dumbbell, Edit2 } from 'lucide-react';
+import { Info, Dumbbell, Edit2, AlertCircle } from 'lucide-react';
 import { ExerciseSession } from '../types';
 import { getWeightPerSide, formatPlateBreakdown, getPlateBreakdown } from '../utils/plateCalculator';
+import { getFailureContextTip } from '../utils/motivationUtils';
 import type { Theme } from '../utils/themeColors';
 
 interface ExerciseCardProps {
@@ -130,6 +131,20 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Contextual failure tip */}
+      {(() => {
+        const firstFailedIdx = exercise.sets.findIndex(r => r !== null && r < 5);
+        if (firstFailedIdx === -1) return null;
+        const tip = getFailureContextTip(firstFailedIdx, exercise.sets.length);
+        if (!tip) return null;
+        return (
+          <div className="mt-3 flex items-start gap-2 bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
+            <AlertCircle size={14} className="text-warning flex-shrink-0 mt-0.5" />
+            <span className="text-xs text-base-content/70">{tip} Finish all sets — the work still counts.</span>
+          </div>
+        );
+      })()}
     </div>
   );
 };

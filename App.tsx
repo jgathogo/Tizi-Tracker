@@ -10,7 +10,7 @@ import { WarmupCalculator } from './components/WarmupCalculator';
 import { WeightAdjustmentModal } from './components/WeightAdjustmentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AddExerciseModal } from './components/AddExerciseModal';
-import { WorkoutCompleteModal } from './components/WorkoutCompleteModal';
+import { WorkoutCompleteModal, DeloadNotification } from './components/WorkoutCompleteModal';
 import { Logo } from './components/Logo';
 import { LayoutDashboard, History as HistoryIcon, LineChart, Plus, Check, Play, ExternalLink, Loader2, Settings, Dumbbell, Activity, PlusCircle, Calendar, Download, AlertCircle, Flame, Zap, Target, Trophy } from 'lucide-react';
 import { getWeightPerSide } from './utils/plateCalculator';
@@ -18,7 +18,7 @@ import { exportUserData, getLastBackupDate, shouldShowBackupReminder, getDaysSin
 import { calculateRestDuration } from './utils/restTimerUtils';
 import { getNextWorkoutDate } from './utils/workoutUtils';
 import { analyzeWorkoutPattern } from './utils/scheduleUtils';
-import { getMotivationSummary } from './utils/motivationUtils';
+import { getMotivationSummary, getStallMessage } from './utils/motivationUtils';
 import { calculateProgression } from './utils/progressionUtils';
 import { applyTheme, getStoredTheme, initializeTheme, type Theme } from './utils/themeColors';
 import { AuthModal } from './components/AuthModal';
@@ -114,7 +114,7 @@ export default function App() {
   const [weightModal, setWeightModal] = useState<{index: number, name: string, weight: number} | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
-  const [completedWorkout, setCompletedWorkout] = useState<{workout: WorkoutSessionData, nextWorkout: 'A' | 'B'} | null>(null);
+  const [completedWorkout, setCompletedWorkout] = useState<{workout: WorkoutSessionData, nextWorkout: 'A' | 'B', deloadNotifications: DeloadNotification[]} | null>(null);
   
   // Cloud Sync / Authentication state
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -594,7 +594,7 @@ export default function App() {
         const newWeights = { ...prev.currentWeights };
         const newAttempts = { ...(prev.exerciseAttempts || {}) };
         const newFailures = { ...(prev.consecutiveFailures || {}) };
-        const deloadNotifications: Array<{ exercise: string; message: string }> = [];
+        const modalDeloads: DeloadNotification[] = [];
 
         // Only progress if it was a standard 5x5 workout
         if (activeSession.type === 'A' || activeSession.type === 'B') {
@@ -605,11 +605,12 @@ export default function App() {
                 newAttempts[ex.name] = progression.nextAttempt;
                 newFailures[ex.name] = progression.nextConsecutiveFailures;
                 
-                // Handle deload notification
                 if (progression.deloadInfo) {
-                    deloadNotifications.push({
+                    modalDeloads.push({
                         exercise: ex.name,
-                        message: `${ex.name}: ${progression.deloadInfo.reason} (${progression.deloadInfo.oldWeight}${prev.unit} → ${progression.deloadInfo.newWeight}${prev.unit})`
+                        oldWeight: progression.deloadInfo.oldWeight,
+                        newWeight: progression.deloadInfo.newWeight,
+                        reason: progression.deloadInfo.reason
                     });
                     console.log(`⚠️ Tizi Tracker: ${ex.name} auto-deloaded from ${progression.deloadInfo.oldWeight}${prev.unit} to ${progression.deloadInfo.newWeight}${prev.unit}`);
                 } else if (progression.nextConsecutiveFailures > 0) {
@@ -637,16 +638,8 @@ export default function App() {
             : 'N/A'
         });
 
-        // Show deload notifications if any (using setTimeout to avoid blocking state update)
-        if (deloadNotifications.length > 0) {
-            const messages = deloadNotifications.map(n => n.message).join('\n');
-            setTimeout(() => {
-                alert(`Plateau Detected\n\n${messages}\n\nThis helps you recover and build momentum to break your personal bests.`);
-            }, 500);
-        }
-
-        // Show completion modal
-        setCompletedWorkout({ workout: completedSession, nextWorkout });
+        // Show completion modal with deload info embedded
+        setCompletedWorkout({ workout: completedSession, nextWorkout, deloadNotifications: modalDeloads });
         
         // Auto-backup after workout completion (silent, no prompt)
         setTimeout(() => {
@@ -1048,7 +1041,7 @@ export default function App() {
                  {motivation.sessionStreak > 0 && (
                    <div className="flex items-center gap-1.5 bg-warning/15 px-3 py-1 rounded-full">
                      <Zap size={13} className="text-warning" />
-                     <span className="text-xs font-bold text-warning">{motivation.sessionStreak} workout streak</span>
+                     <span className="text-xs font-bold text-warning">{motivation.sessionStreak} day streak</span>
                    </div>
                  )}
                  {motivation.weeklyStreak > 0 && (
@@ -1151,12 +1144,16 @@ export default function App() {
                    const repeatCount = user.repeatCount?.[ex.name] ?? 2;
                    return (
                      <div key={idx} className="text-info-content text-sm">
-                       <div className="flex items-center gap-2">
+                       <div className="flex items-center gap-2 flex-wrap">
                          <div className="w-1.5 h-1.5 rounded-full bg-base-content/60" />
                          <span>{ex.name} - {ex.weight}{user.unit}</span>
                          {failureCount > 0 && (
-                           <span className="text-xs bg-error/30 text-error-content px-2 py-0.5 rounded-full font-medium">
-                             Stalled {failureCount}x
+                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                             failureCount >= 2 
+                               ? 'bg-error/30 text-error-content' 
+                               : 'bg-warning/30 text-warning-content'
+                           }`}>
+                             Retry {failureCount}/3
                            </span>
                          )}
                          {failureCount === 0 && attempt > 1 && (
@@ -1165,6 +1162,11 @@ export default function App() {
                            </span>
                          )}
                        </div>
+                       {failureCount > 0 && (
+                         <div className="text-info-content/60 text-xs ml-5 mt-0.5 italic">
+                           {getStallMessage(failureCount)}
+                         </div>
+                       )}
                        {weightPerSide > 0 && (
                          <div className="text-info-content/70 text-xs ml-5 mt-0.5">
                            {weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{user.unit} / side
@@ -1464,6 +1466,7 @@ export default function App() {
           unit={user.unit}
           schedule={user.schedule}
           userName={user.name}
+          deloadNotifications={completedWorkout.deloadNotifications}
           motivationAfter={getMotivationSummary(
             user.history,
             user.schedule

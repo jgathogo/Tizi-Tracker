@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserProfile } from '../types';
-import { Calendar, CheckCircle, XCircle, Dumbbell, Trash2 } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, AlertTriangle, Dumbbell, Trash2 } from 'lucide-react';
 import type { Theme } from '../App';
 
 interface HistoryProps {
@@ -10,8 +10,15 @@ interface HistoryProps {
   theme?: Theme;
 }
 
+function getSessionStatus(exercises: { sets: (number | null)[] }[]) {
+  const allPassed = exercises.every(ex => ex.sets.every(r => r === 5));
+  const anyFailed = exercises.some(ex => ex.sets.some(r => r !== null && r < 5));
+  if (allPassed) return 'perfect';
+  if (anyFailed) return 'failed';
+  return 'incomplete';
+}
+
 export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme = 'dark' }) => {
-  // Sort by date desc
   const sorted = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   if (sorted.length === 0) {
@@ -23,11 +30,17 @@ export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme
   return (
     <div className="space-y-4 pb-20">
       {sorted.map((workout) => {
-        // Calculate total volume for the workout
         const totalVolume = workout.exercises.reduce((vol, ex) => {
            const setsReps = ex.sets.reduce((sum, r) => sum + (r || 0), 0);
            return vol + (setsReps * ex.weight);
         }, 0);
+
+        const status = workout.completed ? getSessionStatus(workout.exercises) : 'incomplete';
+        const statusIcon = status === 'perfect'
+          ? <CheckCircle size={18} className="text-success" />
+          : status === 'failed'
+            ? <AlertTriangle size={18} className="text-warning" />
+            : <XCircle size={18} className="text-error" />;
 
         return (
           <div key={workout.id} className="rounded-xl p-4 border flex flex-col gap-3 shadow-sm bg-base-200 border-base-300">
@@ -44,7 +57,7 @@ export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme
                     <Dumbbell size={12} />
                     <span>{totalVolume.toLocaleString()} {unit}</span>
                  </div>
-                 {workout.completed ? <CheckCircle size={18} className="text-success" /> : <XCircle size={18} className="text-error" />}
+                 {statusIcon}
                  {onDelete && (
                    <button
                      onClick={() => onDelete(workout.id)}
@@ -59,10 +72,13 @@ export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme
             
             <div className="grid grid-cols-1 gap-2">
               {workout.exercises.map((ex, idx) => {
+                  const exFailed = ex.sets.some(r => r !== null && r < 5);
                   return (
                       <div key={idx} className="flex justify-between text-sm group">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium group-hover:text-primary transition-colors text-base-content">{ex.name}</span>
+                            <span className={`font-medium transition-colors ${
+                              exFailed ? 'text-warning' : 'text-base-content group-hover:text-primary'
+                            }`}>{ex.name}</span>
                             {ex.attempt && ex.attempt > 0 && (
                               <span className="text-xs font-bold px-1.5 py-0.5 rounded text-base-content/60 bg-base-300/50">
                                 ({ex.attempt})
@@ -71,7 +87,12 @@ export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme
                           </div>
                           <div className="flex gap-4">
                                <span className="font-bold text-base-content/80">{ex.weight} {unit}</span>
-                               <span className="font-mono text-base-content/60">{ex.sets.map(r => r === null ? '-' : r).join('/')}</span>
+                               <span className="font-mono text-base-content/60">
+                                 {ex.sets.map((r, i) => {
+                                   if (r === null) return '-';
+                                   return r;
+                                 }).join('/')}
+                               </span>
                           </div>
                       </div>
                   );
