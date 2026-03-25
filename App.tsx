@@ -26,9 +26,18 @@ import { onAuthStateChange, getCurrentUser, signOut, isAuthAvailable } from './s
 import { saveToCloud, loadFromCloud, mergeData, isSyncAvailable } from './services/syncService';
 import type { User as FirebaseUser } from 'firebase/auth';
 
-// --- CONFIGURATION ---
-// Change this variable to rename the app throughout the UI.
+declare const __BUILD_TIMESTAMP__: string;
+
 const APP_NAME = "Tizi Tracker";
+const APP_VERSION = (() => {
+  try {
+    const d = new Date(__BUILD_TIMESTAMP__);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+  } catch {
+    return 'dev';
+  }
+})();
 
 const ACTIVE_SESSION_KEY = 'tizi_tracker_active_session';
 
@@ -1333,7 +1342,7 @@ export default function App() {
     <div className="min-h-screen font-sans selection:bg-primary/30 bg-base-100 text-base-content">
       
       <div className="fixed bottom-0 w-full backdrop-blur-md border-t z-50 bg-base-200/90 border-base-300">
-          <div className="flex justify-around max-w-md mx-auto">
+          <div className="flex justify-around max-w-md mx-auto relative">
               <button 
                 onClick={() => setActiveTab('workout')}
                 className={`flex-1 py-4 flex flex-col items-center gap-1 relative ${
@@ -1370,6 +1379,7 @@ export default function App() {
                   <LineChart size={20} />
                   <span className="text-[10px] font-bold uppercase tracking-tighter">Trends</span>
               </button>
+              <span className="absolute bottom-0.5 right-2 text-[8px] text-base-content/25 font-mono select-none">v{APP_VERSION}</span>
           </div>
       </div>
 
