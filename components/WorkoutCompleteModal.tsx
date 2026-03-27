@@ -49,7 +49,11 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
     return vol + (totalReps * ex.weight);
   }, 0);
 
-  const outcome = getSessionOutcome(workout.exercises);
+  const mainExercises = workout.exercises.filter(e => e.category === 'main' || (!e.category && !e.isCustom));
+  const accessoryExercises = workout.exercises.filter(e => e.category === 'accessory');
+  const warmupExercises = workout.exercises.filter(e => e.category === 'warmup');
+
+  const outcome = getSessionOutcome(mainExercises);
   const hasDeloads = deloadNotifications.length > 0;
   const encouragement = getSessionEncouragement(outcome);
 
@@ -94,9 +98,10 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
       : encouragement;
 
   const getExerciseStatus = (ex: typeof workout.exercises[0]) => {
-    const allFives = ex.sets.every(r => r === 5);
-    const anyFailed = ex.sets.some(r => r !== null && r < 5);
-    if (allFives) return 'success';
+    const target = ex.targetReps ?? 5;
+    const allHit = ex.sets.every(r => r === target);
+    const anyFailed = ex.sets.some(r => r !== null && r < target);
+    if (allHit) return 'success';
     if (anyFailed) return 'failed';
     return 'incomplete';
   };
@@ -186,45 +191,54 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
             </div>
           </div>
 
-          {/* Workout Breakdown */}
-          <div>
-            <h4 className="text-sm font-bold text-base-content/80 uppercase tracking-wider mb-3">
-              Exercise Breakdown
-            </h4>
-            <div className="space-y-2">
-              {workout.exercises.map((ex, idx) => {
-                const totalReps = ex.sets.reduce((sum, reps) => sum + (reps || 0), 0);
-                const completedSets = ex.sets.filter(r => r !== null && r > 0).length;
-                const status = getExerciseStatus(ex);
-                const statusIcon = status === 'success'
-                  ? <CheckCircle size={14} className="text-success" />
-                  : <AlertTriangle size={14} className="text-warning" />;
+          {/* Exercise Breakdown */}
+          <div className="space-y-4">
+            {[
+              { label: 'Main Lifts', exercises: mainExercises },
+              ...(accessoryExercises.length > 0 ? [{ label: 'Accessories', exercises: accessoryExercises }] : []),
+            ].map(section => (
+              <div key={section.label}>
+                <h4 className="text-sm font-bold text-base-content/80 uppercase tracking-wider mb-3">
+                  {section.label}
+                </h4>
+                <div className="space-y-2">
+                  {section.exercises.map((ex, idx) => {
+                    const totalReps = ex.sets.reduce((sum, reps) => sum + (reps || 0), 0);
+                    const completedSets = ex.sets.filter(r => r !== null && r > 0).length;
+                    const status = getExerciseStatus(ex);
+                    const statusIcon = status === 'success'
+                      ? <CheckCircle size={14} className="text-success" />
+                      : <AlertTriangle size={14} className="text-warning" />;
 
-                return (
-                  <div
-                    key={idx}
-                    className={`rounded-lg p-3 border flex justify-between items-center ${
-                      status === 'success' 
-                        ? 'bg-base-300/50 border-base-300' 
-                        : 'bg-warning/5 border-warning/20'
-                    }`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-base-content font-semibold">{ex.name}</span>
-                        {statusIcon}
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-lg p-3 border flex justify-between items-center ${
+                          status === 'success'
+                            ? 'bg-base-300/50 border-base-300'
+                            : 'bg-warning/5 border-warning/20'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-base-content font-semibold">{ex.name}</span>
+                            {statusIcon}
+                          </div>
+                          <div className="text-xs text-base-content/60">
+                            {ex.weight > 0 ? `${ex.weight}${unit} × ` : ''}{completedSets} sets ({totalReps} reps)
+                          </div>
+                        </div>
+                        {ex.weight > 0 && (
+                          <div className="text-sm text-base-content/80 font-mono">
+                            {totalReps * ex.weight} {unit}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-base-content/60">
-                        {ex.weight}{unit} × {completedSets} sets ({totalReps} reps)
-                      </div>
-                    </div>
-                    <div className="text-sm text-base-content/80 font-mono">
-                      {totalReps * ex.weight} {unit}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Weekly goal crushed banner */}

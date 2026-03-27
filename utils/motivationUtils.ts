@@ -165,7 +165,10 @@ export function pick(pool: string[]): string {
 }
 
 export function getSessionOutcome(exercises: ExerciseSession[]): SessionOutcome {
-  const results = exercises.map(ex => ex.sets.every(r => r === 5));
+  const results = exercises.map(ex => {
+    const target = ex.targetReps ?? 5;
+    return ex.sets.every(r => r === target);
+  });
   if (results.every(Boolean)) return 'perfect';
   if (results.some(Boolean)) return 'partial';
   return 'tough';

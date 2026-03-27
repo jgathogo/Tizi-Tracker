@@ -28,19 +28,37 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   unit,
   theme
 }) => {
+  const target = exercise.targetReps ?? 5;
+  const isWarmup = exercise.category === 'warmup';
+  const isAccessory = exercise.category === 'accessory';
+
   const getCircleColor = (reps: number | null) => {
-    if (reps === null) return 'bg-base-300 text-transparent border-base-300'; // Not started
-    if (reps === 5) return 'bg-success text-success-content border-success shadow-[0_0_15px_rgba(34,197,94,0.4)]'; // Success
-    if (reps === 0) return 'bg-error/20 text-error-content border-error'; // Failed complete
-    return 'bg-warning text-warning-content border-warning'; // Partial
+    if (reps === null) return 'bg-base-300 text-transparent border-base-300';
+    if (reps === target) return 'bg-success text-success-content border-success shadow-[0_0_15px_rgba(34,197,94,0.4)]';
+    if (reps === 0) return 'bg-error/20 text-error-content border-error';
+    return 'bg-warning text-warning-content border-warning';
   };
 
+  const cardBorder = isWarmup
+    ? 'border-info/30'
+    : isAccessory
+      ? 'border-secondary/30'
+      : 'border-base-300';
+
+  const cardBg = isWarmup
+    ? 'bg-base-200/70'
+    : isAccessory
+      ? 'bg-base-200/80'
+      : 'bg-base-200';
+
   return (
-    <div className="bg-base-200 rounded-2xl p-4 md:p-6 shadow-lg border border-base-300 mb-4">
+    <div className={`${cardBg} rounded-2xl p-4 md:p-6 shadow-lg border ${cardBorder} mb-4`}>
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-xl font-bold text-base-content">{exercise.name}</h3>
+            <h3 className={`text-xl font-bold ${isWarmup ? 'text-info' : isAccessory ? 'text-secondary' : 'text-base-content'}`}>{exercise.name}</h3>
+            {isWarmup && <span className="text-[10px] font-bold uppercase bg-info/10 text-info px-2 py-0.5 rounded-full">warmup</span>}
+            {isAccessory && <span className="text-[10px] font-bold uppercase bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">accessory</span>}
             {onEditAttempt !== undefined && exerciseIndex !== undefined ? (
               <button
                 onClick={() => {
@@ -66,42 +84,51 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               )
             )}
           </div>
-          <div className="flex flex-col gap-1">
-            <button 
-              onClick={() => onEditWeight(exercise.name, exercise.weight)}
-              className="group flex items-center gap-2 hover:bg-base-300 p-2 -ml-2 rounded-lg transition-all"
-              title="Edit Weight"
-            >
-               <div className="flex items-baseline gap-1">
-                 <span className="text-3xl font-bold text-primary group-hover:text-primary/80 transition-colors">{exercise.weight}</span>
-                 <span className="text-sm font-medium text-base-content/60">{unit}</span>
-               </div>
-               <Edit2 size={16} className="text-base-content/50 group-hover:text-primary transition-colors" />
-            </button>
-            {(() => {
-              const weightPerSide = getWeightPerSide(exercise.weight, unit as 'kg' | 'lb');
-              const plates = getPlateBreakdown(weightPerSide, unit as 'kg' | 'lb');
-              const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
-              if (weightPerSide <= 0) return null;
-              return (
-                <div className="text-xs text-base-content/60 ml-2">
-                  <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
-                  {plates.length > 0 && (
-                    <span className="text-base-content/50 ml-2">({plateText})</span>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
+          {isWarmup ? (
+            <div className="text-sm text-base-content/50 mt-1">
+              {target} {exercise.name.includes('seconds') || exercise.name.includes('Plank') ? 'sec' : 'reps'} per set
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <button 
+                onClick={() => onEditWeight(exercise.name, exercise.weight)}
+                className="group flex items-center gap-2 hover:bg-base-300 p-2 -ml-2 rounded-lg transition-all"
+                title="Edit Weight"
+              >
+                 <div className="flex items-baseline gap-1">
+                   <span className="text-3xl font-bold text-primary group-hover:text-primary/80 transition-colors">{exercise.weight}</span>
+                   <span className="text-sm font-medium text-base-content/60">{unit}</span>
+                 </div>
+                 <Edit2 size={16} className="text-base-content/50 group-hover:text-primary transition-colors" />
+              </button>
+              {(() => {
+                const weightPerSide = getWeightPerSide(exercise.weight, unit as 'kg' | 'lb');
+                const plates = getPlateBreakdown(weightPerSide, unit as 'kg' | 'lb');
+                const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
+                if (weightPerSide <= 0) return null;
+                return (
+                  <div className="text-xs text-base-content/60 ml-2">
+                    <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
+                    {plates.length > 0 && (
+                      <span className="text-base-content/50 ml-2">({plateText})</span>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
-            <button 
-                onClick={() => onOpenWarmup(exercise.name, exercise.weight)}
-                className="p-2 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-primary rounded-lg transition-colors"
-                title="Warmup Calculator"
-            >
-                <Dumbbell size={20} />
-            </button>
+        {!isWarmup && (
+          <div className="flex gap-2">
+            {!isAccessory && (
+              <button 
+                  onClick={() => onOpenWarmup(exercise.name, exercise.weight)}
+                  className="p-2 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-primary rounded-lg transition-colors"
+                  title="Warmup Calculator"
+              >
+                  <Dumbbell size={20} />
+              </button>
+            )}
             <button 
                 onClick={() => onOpenGuide(exercise.name)}
                 className="p-2 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-primary rounded-lg transition-colors"
@@ -109,7 +136,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             >
                 <Info size={20} />
             </button>
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between gap-2 md:gap-4">
@@ -118,10 +146,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
              <span className="text-xs text-base-content/50 font-medium">Set {index + 1}</span>
              <button
                onClick={() => {
-                 // Cycle logic: 5 -> 4 -> 3 -> 2 -> 1 -> 0 -> 5
-                 // Default to 5 if null
-                 let nextReps = reps === null ? 5 : reps - 1;
-                 if (nextReps < 0) nextReps = 5;
+                 let nextReps = reps === null ? target : reps - 1;
+                 if (nextReps < 0) nextReps = target;
                  onSetUpdate(index, nextReps);
                }}
                className={`w-12 h-12 md:w-14 md:h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${getCircleColor(reps)}`}
@@ -132,9 +158,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         ))}
       </div>
 
-      {/* Contextual failure tip */}
-      {(() => {
-        const firstFailedIdx = exercise.sets.findIndex(r => r !== null && r < 5);
+      {/* Contextual failure tip (main lifts only) */}
+      {!isWarmup && !isAccessory && (() => {
+        const firstFailedIdx = exercise.sets.findIndex(r => r !== null && r < target);
         if (firstFailedIdx === -1) return null;
         const tip = getFailureContextTip(firstFailedIdx, exercise.sets.length);
         if (!tip) return null;

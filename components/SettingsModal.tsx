@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2, Sun, Moon, Dumbbell } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { isAuthAvailable } from '../services/authService';
@@ -165,7 +165,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 type="file" 
                 ref={fileInputRef}
                 className="hidden" 
-                accept=".json"
+                accept=".json,application/json,text/plain,*/*"
                 onChange={handleFileChange}
             />
             <button 
@@ -388,6 +388,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Set Scheme */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
+              <Dumbbell size={14} /> Set Scheme
+            </h4>
+            <div className="flex gap-2">
+              {(['3x5', '5x5'] as const).map(scheme => (
+                <button
+                  key={scheme}
+                  onClick={() => onUpdate({ ...user, setScheme: scheme })}
+                  className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
+                    (user.setScheme || '3x5') === scheme
+                      ? 'bg-primary text-primary-content'
+                      : 'bg-base-300 text-base-content/70 hover:bg-base-300/80'
+                  }`}
+                >
+                  {scheme}
+                </button>
+              ))}
+            </div>
+            <div className="text-xs text-base-content/50">
+              3x5 is recommended for lifters 40+ (less fatigue, same strength gains). 5x5 adds more volume for muscle growth.
+            </div>
+          </div>
+
+          <hr className="border-base-300" />
 
           {/* Repeat Count Per Exercise */}
           <div className="space-y-3">

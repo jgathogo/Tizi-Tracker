@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, ExerciseSession, WorkoutSessionData, FormGuideData, WorkoutType, WorkoutSchedule } from './types';
+import { UserProfile, ExerciseSession, WorkoutSessionData, FormGuideData, WorkoutType, WorkoutSchedule, ExerciseCategory } from './types';
 import { getExerciseFormGuide } from './services/geminiService';
 import { ExerciseCard } from './components/ExerciseCard';
 import { RestTimer } from './components/RestTimer';
@@ -78,6 +78,30 @@ const INITIAL_STATE: UserProfile = {
 const PROGRAMS = {
   'A': ['Squat', 'Bench Press', 'Barbell Row'],
   'B': ['Squat', 'Overhead Press', 'Deadlift']
+};
+
+const DEFAULT_WARMUPS = {
+  A: [
+    { name: 'Jumping Jacks', sets: 1, targetReps: 30 },
+    { name: 'Bodyweight Squats', sets: 1, targetReps: 10 },
+    { name: 'Plank (seconds)', sets: 1, targetReps: 30 },
+  ],
+  B: [
+    { name: 'Mountain Climbers', sets: 1, targetReps: 20 },
+    { name: 'Knee High Raises', sets: 1, targetReps: 20 },
+    { name: 'Pelvic Bridges', sets: 1, targetReps: 10 },
+  ],
+};
+
+const DEFAULT_ACCESSORIES = {
+  A: [
+    { name: 'Barbell Curl', sets: 3, targetReps: 10, startWeight: 15 },
+    { name: 'Barbell Hip Thrust', sets: 3, targetReps: 10, startWeight: 30 },
+  ],
+  B: [
+    { name: 'Chin-ups', sets: 3, targetReps: 8, startWeight: 0 },
+    { name: 'Bulgarian Split Squat', sets: 3, targetReps: 8, startWeight: 20 },
+  ],
 };
 
 export default function App() {
@@ -427,21 +451,52 @@ export default function App() {
     let customName = "";
 
     if (type === 'A' || type === 'B') {
-        exercises = PROGRAMS[type].map(name => {
+        const scheme = user.setScheme || '3x5';
+        const mainSets = scheme === '5x5' ? 5 : 3;
+
+        // Warmup exercises (bodyweight, no barbell)
+        const warmupDefs = (user.warmups?.[type]) || DEFAULT_WARMUPS[type];
+        const warmupExercises: ExerciseSession[] = warmupDefs.map(w => ({
+          name: w.name,
+          weight: 0,
+          sets: Array(w.sets).fill(null),
+          targetReps: w.targetReps,
+          category: 'warmup' as ExerciseCategory,
+        }));
+
+        // Main lifts
+        const mainExercises: ExerciseSession[] = PROGRAMS[type].map(name => {
           const currentWeight = user.currentWeights[name] || 0;
           const attempt = user.exerciseAttempts?.[name] || 1;
+          const sets = name === 'Deadlift' ? 1 : mainSets;
           return {
             name,
             weight: currentWeight,
-            sets: name === 'Deadlift' ? [null] : [null, null, null, null, null],
-            attempt
+            sets: Array(sets).fill(null),
+            attempt,
+            targetReps: 5,
+            category: 'main' as ExerciseCategory,
           };
         });
-        console.log(`🏋️ Tizi Tracker: Started Workout ${type}`, {
-          exercises: exercises.map(e => `${e.name} @ ${e.weight}${user.unit}`)
+
+        // Accessory exercises
+        const accessoryDefs = (user.accessories?.[type]) || DEFAULT_ACCESSORIES[type];
+        const accessoryExercises: ExerciseSession[] = accessoryDefs.map(a => ({
+          name: a.name,
+          weight: user.currentWeights[a.name] ?? a.startWeight,
+          sets: Array(a.sets).fill(null),
+          targetReps: a.targetReps,
+          category: 'accessory' as ExerciseCategory,
+        }));
+
+        exercises = [...warmupExercises, ...mainExercises, ...accessoryExercises];
+
+        console.log(`🏋️ Tizi Tracker: Started Workout ${type} (${scheme})`, {
+          warmup: warmupExercises.length,
+          main: mainExercises.map(e => `${e.name} @ ${e.weight}${user.unit}`),
+          accessories: accessoryExercises.map(e => `${e.name} @ ${e.weight}${user.unit}`)
         });
     } else {
-        // Custom generic log
         customName = window.prompt("Enter activity name (e.g. Skipping, Running):") || "General Activity";
         exercises = [{
             name: customName,
@@ -483,15 +538,25 @@ export default function App() {
     const updatedExercises = [...activeSession.exercises];
     updatedExercises[exerciseIndex].sets[setIndex] = reps;
     
-    // Dynamic rest timer duration based on performance
     if (reps >= 0) {
-      const duration = calculateRestDuration(reps);
+      const category = updatedExercises[exerciseIndex].category;
+      let duration: number;
+      let timerType: 'working-set' | 'warmup' = 'working-set';
+
+      if (category === 'warmup') {
+        duration = 15; // Minimal rest for bodyweight warmup
+        timerType = 'warmup';
+      } else if (category === 'accessory') {
+        duration = 45; // 30-60s for accessories, keep the pace up
+      } else {
+        duration = calculateRestDuration(reps);
+      }
+
       setRestTimerConfig({
         duration,
         autoStart: true,
-        type: 'working-set'
+        type: timerType
       });
-      // Reset autoStart after a brief moment to allow timer to detect the change
       setTimeout(() => {
         setRestTimerConfig(prev => ({ ...prev, autoStart: false }));
       }, 100);
@@ -605,9 +670,18 @@ export default function App() {
         const newFailures = { ...(prev.consecutiveFailures || {}) };
         const modalDeloads: DeloadNotification[] = [];
 
-        // Only progress if it was a standard 5x5 workout
         if (activeSession.type === 'A' || activeSession.type === 'B') {
             completedExercises.forEach(ex => {
+                // Skip warmup exercises -- no weight progression
+                if (ex.category === 'warmup') return;
+
+                // Accessories: just save their current weight for next session, no deload logic
+                if (ex.category === 'accessory') {
+                    newWeights[ex.name] = ex.weight;
+                    return;
+                }
+
+                // Main lifts: full StrongLifts progression
                 const progression = calculateProgression(ex, prev);
                 
                 newWeights[ex.name] = progression.nextWeight;
@@ -624,7 +698,7 @@ export default function App() {
                     console.log(`⚠️ Tizi Tracker: ${ex.name} auto-deloaded from ${progression.deloadInfo.oldWeight}${prev.unit} to ${progression.deloadInfo.newWeight}${prev.unit}`);
                 } else if (progression.nextConsecutiveFailures > 0) {
                     console.log(`⚠️ Tizi Tracker: ${ex.name} failed (${progression.nextConsecutiveFailures}/3 consecutive failures)`);
-                } else if (ex.sets.every(r => r === 5)) {
+                } else if (ex.sets.every(r => r === (ex.targetReps ?? 5))) {
                     const currentAttempt = ex.attempt || 1;
                     const repeatCount = prev.repeatCount?.[ex.name] ?? 2;
                     if (currentAttempt >= repeatCount) {
@@ -1292,20 +1366,70 @@ export default function App() {
              </div>
 
              <div className="space-y-4">
-                {activeSession.exercises.map((ex, exIdx) => (
-                    <ExerciseCard 
-                        key={exIdx} 
-                        exercise={ex} 
-                        unit={user.unit}
-                        exerciseIndex={exIdx}
-                        theme={theme}
-                        onSetUpdate={(setIdx, reps) => updateSet(exIdx, setIdx, reps)}
-                        onOpenGuide={fetchGuide}
-                        onOpenWarmup={(name, weight) => setWarmupModal({name, weight})}
-                        onEditWeight={(name, weight) => setWeightModal({index: exIdx, name, weight})}
-                        onEditAttempt={updateExerciseAttempt}
-                    />
-                ))}
+                {(() => {
+                  const warmups = activeSession.exercises.filter(e => e.category === 'warmup');
+                  const mains = activeSession.exercises.filter(e => e.category === 'main' || (!e.category && !e.isCustom));
+                  const accessories = activeSession.exercises.filter(e => e.category === 'accessory');
+                  const others = activeSession.exercises.filter(e => !e.category && e.isCustom);
+
+                  const renderCards = (exercises: ExerciseSession[]) =>
+                    exercises.map((ex) => {
+                      const exIdx = activeSession.exercises.indexOf(ex);
+                      return (
+                        <ExerciseCard
+                          key={exIdx}
+                          exercise={ex}
+                          unit={user.unit}
+                          exerciseIndex={exIdx}
+                          theme={theme}
+                          onSetUpdate={(setIdx, reps) => updateSet(exIdx, setIdx, reps)}
+                          onOpenGuide={fetchGuide}
+                          onOpenWarmup={(name, weight) => setWarmupModal({name, weight})}
+                          onEditWeight={(name, weight) => setWeightModal({index: exIdx, name, weight})}
+                          onEditAttempt={ex.category === 'main' ? updateExerciseAttempt : undefined}
+                        />
+                      );
+                    });
+
+                  return (
+                    <>
+                      {warmups.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-3 pt-2 pb-1">
+                            <Activity size={14} className="text-info" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-info">Warmup</span>
+                            <div className="flex-1 h-px bg-info/20" />
+                          </div>
+                          {renderCards(warmups)}
+                        </>
+                      )}
+
+                      {mains.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-3 pt-2 pb-1">
+                            <Flame size={14} className="text-primary" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-primary">Main Lifts</span>
+                            <div className="flex-1 h-px bg-primary/20" />
+                          </div>
+                          {renderCards(mains)}
+                        </>
+                      )}
+
+                      {accessories.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-3 pt-2 pb-1">
+                            <Zap size={14} className="text-secondary" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-secondary">Accessories</span>
+                            <div className="flex-1 h-px bg-secondary/20" />
+                          </div>
+                          {renderCards(accessories)}
+                        </>
+                      )}
+
+                      {others.length > 0 && renderCards(others)}
+                    </>
+                  );
+                })()}
                 
                 <button
                     onClick={() => setAddExerciseModalOpen(true)}

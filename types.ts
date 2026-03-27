@@ -7,12 +7,16 @@ export interface SetData {
   completed: boolean;
 }
 
+export type ExerciseCategory = 'warmup' | 'main' | 'accessory';
+
 export interface ExerciseSession {
   name: ExerciseName;
   weight: number;
   sets: (number | null)[]; // Array of rep counts
   isCustom?: boolean;
   attempt?: number; // How many times this exercise has been done at this weight (1st, 2nd, 3rd time, etc.)
+  targetReps?: number; // Target reps per set (default 5 for main, varies for accessories/warmup)
+  category?: ExerciseCategory; // warmup | main | accessory -- affects progression, rest, and display
 }
 
 export interface WorkoutSessionData {
@@ -48,6 +52,15 @@ export interface UserProfile {
   height?: number; // Height in cm
   weightIncrements?: Record<string, number>; // Weight increment per exercise for progression (e.g., { "Squat": 5, "Deadlift": 5 })
   restTimerStartMinimized?: boolean; // When true, auto-started rest timer opens minimized (smaller footprint)
+  setScheme?: '5x5' | '3x5'; // Main lift set scheme (default '3x5')
+  accessories?: {
+    A: Array<{ name: string; sets: number; targetReps: number; startWeight: number }>;
+    B: Array<{ name: string; sets: number; targetReps: number; startWeight: number }>;
+  };
+  warmups?: {
+    A: Array<{ name: string; sets: number; targetReps: number }>;
+    B: Array<{ name: string; sets: number; targetReps: number }>;
+  };
 }
 
 export interface SearchResult {

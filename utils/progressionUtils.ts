@@ -19,7 +19,8 @@ export const calculateProgression = (
 } => {
   const currentWeight = exercise.weight;
   const currentAttempt = exercise.attempt || 1;
-  const allSetsDone = exercise.sets.every(r => r === 5);
+  const target = exercise.targetReps ?? 5;
+  const allSetsDone = exercise.sets.every(r => r === target);
   
   // Get per-exercise repeat count, fallback to 2 if not set
   const repeatCount = user.repeatCount?.[exercise.name] ?? 2;
