@@ -1,14 +1,42 @@
 import React from 'react';
-import { Info, Dumbbell, Edit2, AlertCircle } from 'lucide-react';
+import { Dumbbell, Edit2, AlertCircle, Youtube } from 'lucide-react';
 import { ExerciseSession } from '../types';
 import { getWeightPerSide, formatPlateBreakdown, getPlateBreakdown } from '../utils/plateCalculator';
 import { getFailureContextTip } from '../utils/motivationUtils';
 import type { Theme } from '../utils/themeColors';
 
+const FORM_VIDEOS: Record<string, string> = {
+  // Main lifts
+  'Squat': 'https://www.youtube.com/watch?v=Uv_DKDl7EjA',
+  'Bench Press': 'https://www.youtube.com/watch?v=4Y2ZdHCOXok',
+  'Barbell Row': 'https://www.youtube.com/watch?v=kBWAon7ItDw',
+  'Overhead Press': 'https://www.youtube.com/watch?v=nNMR9fRGRjQ',
+  'Deadlift': 'https://www.youtube.com/watch?v=hCDzSR6bW10',
+  // Accessories
+  'Barbell Curl': 'https://www.youtube.com/watch?v=kwG2ipFRgFo',
+  'Barbell Hip Thrust': 'https://www.youtube.com/watch?v=W86oVlnLqY4',
+  'Chin-ups': 'https://www.youtube.com/watch?v=brhRXlOhWAM',
+  'Bulgarian Split Squat': 'https://www.youtube.com/watch?v=onUcwAbmZF8',
+  // Warmups
+  'Jumping Jacks': 'https://www.youtube.com/watch?v=uLVt6u15L98',
+  'Bodyweight Squats': 'https://www.youtube.com/watch?v=aclHkVaku9U',
+  'Plank (seconds)': 'https://www.youtube.com/watch?v=ASdvN_XEl_c',
+  'Mountain Climbers': 'https://www.youtube.com/watch?v=nmwgirgXLYM',
+  'Knee High Raises': 'https://www.youtube.com/watch?v=D3hjgcsEETk',
+  'High Knees': 'https://www.youtube.com/watch?v=D3hjgcsEETk',
+  'Pelvic Bridges': 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
+  'Dead Bugs': 'https://www.youtube.com/watch?v=I5xbsA71v1A',
+  'Lunges (each leg)': 'https://www.youtube.com/watch?v=QOVaHwm-Q6U',
+  'Arm Circles': 'https://www.youtube.com/watch?v=140RTNMciH8',
+  'Push-ups': 'https://www.youtube.com/watch?v=IODxDxX7oi4',
+  'Cat-Cow Stretch': 'https://www.youtube.com/watch?v=kqnua4rHVVA',
+  'Hip Circles': 'https://www.youtube.com/watch?v=QxGmYOqMi7c',
+};
+
 interface ExerciseCardProps {
   exercise: ExerciseSession;
   onSetUpdate: (index: number, reps: number) => void;
-  onOpenGuide: (name: string) => void;
+  onOpenGuide?: (name: string) => void;
   onOpenWarmup: (name: string, weight: number) => void;
   onEditWeight: (name: string, currentWeight: number) => void;
   onEditAttempt?: (exerciseIndex: number, attempt: number) => void;
@@ -118,26 +146,28 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </div>
           )}
         </div>
-        {!isWarmup && (
-          <div className="flex gap-2">
-            {!isAccessory && (
-              <button 
-                  onClick={() => onOpenWarmup(exercise.name, exercise.weight)}
-                  className="p-2 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-primary rounded-lg transition-colors"
-                  title="Warmup Calculator"
-              >
-                  <Dumbbell size={20} />
-              </button>
-            )}
+        <div className="flex gap-2">
+          {!isWarmup && !isAccessory && (
             <button 
-                onClick={() => onOpenGuide(exercise.name)}
+                onClick={() => onOpenWarmup(exercise.name, exercise.weight)}
                 className="p-2 bg-base-200 hover:bg-base-300 text-base-content/70 hover:text-primary rounded-lg transition-colors"
-                title="Form Guide"
+                title="Warmup Calculator"
             >
-                <Info size={20} />
+                <Dumbbell size={20} />
             </button>
-          </div>
-        )}
+          )}
+          {FORM_VIDEOS[exercise.name] && (
+            <a
+              href={FORM_VIDEOS[exercise.name]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-base-200 hover:bg-red-900/30 text-base-content/70 hover:text-red-400 rounded-lg transition-colors"
+              title="Watch form video"
+            >
+              <Youtube size={20} />
+            </a>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-between gap-2 md:gap-4">

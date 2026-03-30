@@ -1206,7 +1206,7 @@ export default function App() {
        <div className="bg-gradient-to-br from-primary to-secondary rounded-3xl p-6 text-primary-content shadow-2xl border border-primary/30 relative overflow-hidden group mb-4">
            <div className="relative z-10">
                <div className="inline-block px-3 py-1 bg-primary-content/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
-                   NEXT 5X5 SESSION
+                   NEXT {(user.setScheme || '3x5').toUpperCase()} SESSION
                </div>
                <h2 className="text-3xl font-bold mb-2">Workout {user.nextWorkout}</h2>
                {(() => {
@@ -1294,7 +1294,7 @@ export default function App() {
                 onClick={() => startWorkout(user.nextWorkout)}
                 className="btn btn-primary px-6 py-3 rounded-xl font-bold text-md flex items-center gap-2 transition-colors shadow-lg"
                >
-                   <Dumbbell size={18} /> Start 5x5
+                   <Dumbbell size={18} /> Start {user.setScheme || '3x5'}
                </button>
            </div>
        </div>
@@ -1399,6 +1399,9 @@ export default function App() {
                             <Activity size={14} className="text-info" />
                             <span className="text-xs font-bold uppercase tracking-wider text-info">Warmup</span>
                             <div className="flex-1 h-px bg-info/20" />
+                          </div>
+                          <div className="text-xs text-info/60 -mt-1 mb-2 ml-6">
+                            Quick circuit -- 1 set each, minimal rest between exercises
                           </div>
                           {renderCards(warmups)}
                         </>

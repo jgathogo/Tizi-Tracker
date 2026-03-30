@@ -1,6 +1,22 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2, Sun, Moon, Dumbbell } from 'lucide-react';
+import { Download, Upload, X, Trash2, Settings, FileJson, AlertTriangle, Calendar, User, TrendingUp, Cloud, CloudOff, LogOut, LogIn, RefreshCw, CheckCircle2, Sun, Moon, Dumbbell, Activity } from 'lucide-react';
 import { UserProfile, WorkoutSchedule } from '../types';
+
+const WARMUP_POOL = [
+  { name: 'Jumping Jacks', targetReps: 30, category: 'cardio' },
+  { name: 'Mountain Climbers', targetReps: 20, category: 'cardio' },
+  { name: 'High Knees', targetReps: 20, category: 'cardio' },
+  { name: 'Bodyweight Squats', targetReps: 10, category: 'lower' },
+  { name: 'Knee High Raises', targetReps: 20, category: 'lower' },
+  { name: 'Lunges (each leg)', targetReps: 8, category: 'lower' },
+  { name: 'Pelvic Bridges', targetReps: 10, category: 'lower' },
+  { name: 'Plank (seconds)', targetReps: 30, category: 'core' },
+  { name: 'Dead Bugs', targetReps: 10, category: 'core' },
+  { name: 'Arm Circles', targetReps: 20, category: 'upper' },
+  { name: 'Push-ups', targetReps: 10, category: 'upper' },
+  { name: 'Cat-Cow Stretch', targetReps: 10, category: 'mobility' },
+  { name: 'Hip Circles', targetReps: 10, category: 'mobility' },
+] as const;
 import type { User as FirebaseUser } from 'firebase/auth';
 import { isAuthAvailable } from '../services/authService';
 import { isSyncAvailable, saveToCloud } from '../services/syncService';
@@ -413,6 +429,60 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               3x5 is recommended for lifters 40+ (less fatigue, same strength gains). 5x5 adds more volume for muscle growth.
             </div>
           </div>
+
+          <hr className="border-base-300" />
+
+          {/* Warmup Editor */}
+          {(['A', 'B'] as const).map(day => {
+            const currentWarmups = user.warmups?.[day] || [];
+            const activeNames = new Set(currentWarmups.map(w => w.name));
+
+            const toggleWarmup = (exercise: typeof WARMUP_POOL[number]) => {
+              const current = user.warmups?.[day] || [];
+              let updated;
+              if (activeNames.has(exercise.name)) {
+                updated = current.filter(w => w.name !== exercise.name);
+              } else {
+                updated = [...current, { name: exercise.name, sets: 1, targetReps: exercise.targetReps }];
+              }
+              onUpdate({
+                ...user,
+                warmups: { ...user.warmups, A: user.warmups?.A || [], B: user.warmups?.B || [], [day]: updated }
+              });
+            };
+
+            return (
+              <div key={day} className="space-y-3">
+                <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
+                  <Activity size={14} /> Workout {day} Warmup
+                </h4>
+                <div className="text-xs text-base-content/50 mb-1">
+                  Pick 3-4 exercises. Mix cardio, lower body, and core for a balanced warmup.
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {WARMUP_POOL.map(exercise => {
+                    const isActive = activeNames.has(exercise.name);
+                    return (
+                      <button
+                        key={exercise.name}
+                        onClick={() => toggleWarmup(exercise)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          isActive
+                            ? 'bg-info/20 text-info border border-info/40'
+                            : 'bg-base-300/50 text-base-content/50 border border-base-300 hover:border-info/30'
+                        }`}
+                      >
+                        {exercise.name} ({exercise.targetReps})
+                      </button>
+                    );
+                  })}
+                </div>
+                {currentWarmups.length === 0 && (
+                  <div className="text-xs text-warning/70">No warmups selected — defaults will be used</div>
+                )}
+              </div>
+            );
+          })}
 
           <hr className="border-base-300" />
 
