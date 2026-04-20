@@ -156,6 +156,12 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
+  /** Dashboard Quick Start: user can repeat A or B; syncs to suggested rotation when `nextWorkout` changes */
+  const [selectedWorkout, setSelectedWorkout] = useState<'A' | 'B'>(INITIAL_STATE.nextWorkout);
+  useEffect(() => {
+    setSelectedWorkout(user.nextWorkout);
+  }, [user.nextWorkout]);
+
   // Check if theme is a dark variant for chart styling
   // DaisyUI themes that are dark-based
   const isDarkTheme = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'night', 'coffee', 'business'].includes(theme);
@@ -938,8 +944,8 @@ export default function App() {
     // Most recent completed workout for the \"Recent Workout\" card
     const recentWorkout = completedWorkouts[0];
     
-    // Get exercises for next workout
-    const nextExercises = PROGRAMS[user.nextWorkout] || [];
+    // Get exercises for the workout letter the user chose on the dashboard (defaults to suggested `nextWorkout`)
+    const nextExercises = PROGRAMS[selectedWorkout] || [];
     
     // Calculate next workout preview with smart fallback
     // For each exercise, find the last time it was performed in history and apply progression logic
@@ -1192,9 +1198,60 @@ export default function App() {
        <div className="bg-gradient-to-br from-primary to-secondary rounded-3xl p-6 text-primary-content shadow-2xl border border-primary/30 relative overflow-hidden group mb-4">
            <div className="relative z-10">
                <div className="inline-block px-3 py-1 bg-primary-content/20 rounded-full text-xs font-bold mb-4 backdrop-blur-sm">
-                   NEXT {(user.setScheme || '3x5').toUpperCase()} SESSION
+                   {selectedWorkout === user.nextWorkout
+                     ? <>NEXT {(user.setScheme || '3x5').toUpperCase()} SESSION</>
+                     : <>{(user.setScheme || '3x5').toUpperCase()} SESSION</>}
                </div>
-               <h2 className="text-3xl font-bold mb-2">Workout {user.nextWorkout}</h2>
+               <div className="mb-3">
+                 <div
+                   className="inline-flex rounded-xl bg-primary-content/15 p-1 border border-primary-content/25 shadow-inner"
+                   role="radiogroup"
+                   aria-label="Choose Workout A or B"
+                 >
+                   {(['A', 'B'] as const).map(letter => {
+                     const isSelected = selectedWorkout === letter;
+                     const isSuggested = user.nextWorkout === letter;
+                     return (
+                       <button
+                         key={letter}
+                         type="button"
+                         role="radio"
+                         aria-checked={isSelected}
+                         aria-label={`Workout ${letter}`}
+                         onClick={() => setSelectedWorkout(letter)}
+                         className={`relative min-w-[3.25rem] px-4 pt-4 pb-3 rounded-lg text-base font-extrabold transition-all ${
+                           isSelected
+                             ? 'bg-primary-content text-primary shadow-md'
+                             : 'text-primary-content/85 hover:bg-primary-content/10'
+                         }`}
+                       >
+                         {letter}
+                         {isSuggested && (
+                           <span
+                             className={`absolute -top-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                               isSelected
+                                 ? 'bg-success text-success-content'
+                                 : 'bg-primary-content/25 text-primary-content'
+                             }`}
+                           >
+                             Next
+                           </span>
+                         )}
+                         {isSelected && !isSuggested && (
+                           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-warning/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warning-content">
+                             Repeat
+                           </span>
+                         )}
+                       </button>
+                     );
+                   })}
+                 </div>
+                 {selectedWorkout !== user.nextWorkout && (
+                   <p className="mt-3 text-xs font-medium text-primary-content/80">
+                     Repeating Workout {selectedWorkout}. Suggested next in your rotation: Workout {user.nextWorkout}.
+                   </p>
+                 )}
+               </div>
                {(() => {
                  // Get last workout date
                  const lastWorkout = user.history
@@ -1277,10 +1334,10 @@ export default function App() {
                  })}
                </div>
                <button 
-                onClick={() => startWorkout(user.nextWorkout)}
+                onClick={() => startWorkout(selectedWorkout)}
                 className="btn btn-primary px-6 py-3 rounded-xl font-bold text-md flex items-center gap-2 transition-colors shadow-lg"
                >
-                   <Dumbbell size={18} /> Start {user.setScheme || '3x5'}
+                   <Dumbbell size={18} /> Start Workout {selectedWorkout}
                </button>
            </div>
        </div>

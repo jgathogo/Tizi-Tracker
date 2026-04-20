@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { UserProfile, ExerciseSession, WorkoutSessionData } from './types';
 import { calculateProgression } from './utils/progressionUtils';
 import App from './App';
@@ -321,9 +321,70 @@ describe('Dashboard Rendering', () => {
 
     render(<App />);
 
-    // Quick Start card should show Workout B with the derived weights
-    expect(screen.getByText(/Workout B/i)).toBeInTheDocument();
+    // Quick Start card should show Workout B with the derived weights (A/B picker uses accessible name)
+    expect(screen.getByRole('radio', { name: 'Workout B' })).toBeInTheDocument();
     expect(screen.getByText(/Overhead Press - 40kg/i)).toBeInTheDocument();
     expect(screen.getByText(/Deadlift - 55kg/i)).toBeInTheDocument();
+  });
+
+  it('should let user pick Workout B when suggested next is A, preview B lifts, and start Workout B', () => {
+    const mockUser: UserProfile = {
+      currentWeights: {
+        Squat: 50,
+        'Bench Press': 40,
+        'Barbell Row': 40,
+        'Overhead Press': 35,
+        Deadlift: 80,
+      },
+      nextWorkout: 'A',
+      history: [
+        {
+          id: '1',
+          date: new Date().toISOString(),
+          type: 'B',
+          exercises: [
+            { name: 'Squat', weight: 50, sets: [5, 5, 5], attempt: 1 },
+            { name: 'Overhead Press', weight: 35, sets: [5, 3, 3], attempt: 1 },
+            { name: 'Deadlift', weight: 80, sets: [5], attempt: 1 },
+          ],
+          completed: true,
+          startTime: Date.now() - 7200000,
+          endTime: Date.now() - 6600000,
+        } as WorkoutSessionData,
+      ],
+      unit: 'kg',
+      setScheme: '3x5',
+      repeatCount: {
+        Squat: 2,
+        'Bench Press': 2,
+        'Barbell Row': 2,
+        'Overhead Press': 2,
+        Deadlift: 2,
+      },
+      weightIncrements: {
+        Squat: 2.5,
+        'Bench Press': 2.5,
+        'Barbell Row': 2.5,
+        'Overhead Press': 2.5,
+        Deadlift: 5,
+      },
+    };
+
+    localStorage.setItem('tizi_tracker_data', JSON.stringify(mockUser));
+
+    render(<App />);
+
+    expect(screen.getByRole('radio', { name: 'Workout A' })).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Workout B' }));
+
+    expect(screen.getByRole('radio', { name: 'Workout B' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/Overhead Press - 35kg/i)).toBeInTheDocument();
+    expect(screen.getByText(/Deadlift - 80kg/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Bench Press/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Start Workout B/i }));
+
+    expect(screen.getByRole('heading', { name: /Workout B/i })).toBeInTheDocument();
   });
 });
