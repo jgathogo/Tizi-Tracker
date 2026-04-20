@@ -1,126 +1,81 @@
 /**
- * Authentication Service
- * 
- * Handles user authentication using Firebase Auth.
- * Supports Google Sign-In and Email/Password authentication.
+ * Authentication against the self-hosted Tizi API (email + password, JWT).
  */
 
-import { 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  User,
-  Auth
-} from 'firebase/auth';
-import { auth, isFirebaseConfigured } from './firebaseConfig';
+import { getApiBaseUrl, isApiConfigured } from './apiConfig';
+import { readStoredAuth, writeStoredAuth, type CloudUser, type StoredAuth } from './authStorage';
 
-/**
- * Check if Firebase is configured and available
- */
-export const isAuthAvailable = (): boolean => {
-  return isFirebaseConfigured() && auth !== null;
-};
+export function isAuthAvailable(): boolean {
+  return isApiConfigured();
+}
 
-/**
- * Sign in with Google
- */
-export const signInWithGoogle = async (): Promise<User | null> => {
-  if (!isAuthAvailable() || !auth) {
-    throw new Error('Firebase Auth is not configured');
+export function getCurrentUser(): CloudUser | null {
+  const a = readStoredAuth();
+  if (!a) return null;
+  return { id: a.userId, email: a.email };
+}
+
+export async function signOut(): Promise<void> {
+  writeStoredAuth(null);
+}
+
+function parseDetail(detail: unknown): string {
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((e: { msg?: string }) => e?.msg || JSON.stringify(e))
+      .join('; ');
   }
+  return 'Request failed';
+}
 
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    console.log('✅ Signed in with Google:', result.user.email);
-    return result.user;
-  } catch (error: any) {
-    console.error('❌ Google sign-in error:', error);
-    throw error;
+async function postJson<T>(path: string, body: object): Promise<T> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(parseDetail(data.detail) || res.statusText);
   }
-};
+  return data as T;
+}
 
-/**
- * Sign in with email and password
- */
-export const signInWithEmail = async (email: string, password: string): Promise<User | null> => {
-  if (!isAuthAvailable() || !auth) {
-    throw new Error('Firebase Auth is not configured');
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  email: string;
+}
+
+function persistFromTokenResponse(data: TokenResponse): StoredAuth {
+  const auth: StoredAuth = {
+    token: data.access_token,
+    userId: data.user_id,
+    email: data.email,
+  };
+  writeStoredAuth(auth);
+  return auth;
+}
+
+export async function signUpWithEmail(email: string, password: string): Promise<CloudUser | null> {
+  if (!isAuthAvailable()) {
+    throw new Error('Cloud sync is not configured (set VITE_TIZI_API_URL)');
   }
+  const data = await postJson<TokenResponse>('/auth/register', { email, password });
+  persistFromTokenResponse(data);
+  return { id: data.user_id, email: data.email };
+}
 
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    console.log('✅ Signed in with email:', result.user.email);
-    return result.user;
-  } catch (error: any) {
-    console.error('❌ Email sign-in error:', error);
-    throw error;
+export async function signInWithEmail(email: string, password: string): Promise<CloudUser | null> {
+  if (!isAuthAvailable()) {
+    throw new Error('Cloud sync is not configured (set VITE_TIZI_API_URL)');
   }
-};
+  const data = await postJson<TokenResponse>('/auth/login', { email, password });
+  persistFromTokenResponse(data);
+  return { id: data.user_id, email: data.email };
+}
 
-/**
- * Sign up with email and password
- */
-export const signUpWithEmail = async (email: string, password: string): Promise<User | null> => {
-  if (!isAuthAvailable() || !auth) {
-    throw new Error('Firebase Auth is not configured');
-  }
-
-  try {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    console.log('✅ Signed up with email:', result.user.email);
-    return result.user;
-  } catch (error: any) {
-    console.error('❌ Email sign-up error:', error);
-    throw error;
-  }
-};
-
-/**
- * Sign out current user
- */
-export const signOut = async (): Promise<void> => {
-  if (!isAuthAvailable() || !auth) {
-    throw new Error('Firebase Auth is not configured');
-  }
-
-  try {
-    await firebaseSignOut(auth);
-    console.log('✅ Signed out successfully');
-  } catch (error: any) {
-    console.error('❌ Sign-out error:', error);
-    throw error;
-  }
-};
-
-/**
- * Get current user
- */
-export const getCurrentUser = (): User | null => {
-  if (!isAuthAvailable() || !auth) {
-    return null;
-  }
-  return auth.currentUser;
-};
-
-/**
- * Subscribe to auth state changes
- * 
- * Args:
- *   callback: Function to call when auth state changes
- * 
- * Returns:
- *   Unsubscribe function
- */
-export const onAuthStateChange = (callback: (user: User | null) => void): (() => void) => {
-  if (!isAuthAvailable() || !auth) {
-    // Return no-op unsubscribe if auth not available
-    return () => {};
-  }
-
-  return onAuthStateChanged(auth, callback);
-};
-
+export type { CloudUser, StoredAuth } from './authStorage';

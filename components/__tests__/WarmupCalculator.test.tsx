@@ -233,7 +233,7 @@ describe('WarmupCalculator', () => {
     
     // Should not have any completed warmups from session 1
     // Check for green background (indicates completed state)
-    const completedWarmups = container.querySelectorAll('.bg-green-900\\/30');
+    const completedWarmups = container.querySelectorAll('.bg-success\\/20');
     expect(completedWarmups.length).toBe(0);
   });
 
@@ -335,7 +335,7 @@ describe('WarmupCalculator', () => {
     expect(screen.queryByText(/All done!/i)).not.toBeInTheDocument();
     
     // Should not have any completed warmups (check for green background indicating completed state)
-    const completedWarmups = container.querySelectorAll('.bg-green-900\\/30');
+    const completedWarmups = container.querySelectorAll('.bg-success\\/20');
     expect(completedWarmups.length).toBe(0);
   });
 });

@@ -107,7 +107,7 @@ export const History: React.FC<HistoryProps> = ({ history, unit, onDelete, theme
               </div>
               <div className="flex items-center gap-3">
                  {duration && (
-                   <div className="flex items-center gap-1 text-xs text-base-content/50" title="Duration">
+                   <div className="flex items-center gap-1 text-xs text-base-content/70" title="Duration">
                      <Clock size={12} />
                      <span>{duration}</span>
                    </div>

@@ -1,0 +1,1717 @@
+{
+  "currentWeights": {
+    "Barbell Row": 40,
+    "Bench Press": 40,
+    "Deadlift": 100,
+    "Overhead Press": 40,
+    "Squat": 75,
+    "Barbell Curl": 20,
+    "Barbell Hip Thrust": 20,
+    "Chin-ups": 0,
+    "Bulgarian Split Squat": 20
+  },
+  "nextWorkout": "A",
+  "history": [
+    {
+      "id": "1775809730211",
+      "date": "2026-04-10T08:28:50.211Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Jumping Jacks",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Pelvic Bridges",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Cat-Cow Stretch",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Arm Circles",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 70,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Deadlift",
+          "weight": 100,
+          "sets": [
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Chin-ups",
+          "weight": 0,
+          "sets": [
+            8,
+            5,
+            4
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        },
+        {
+          "name": "Bulgarian Split Squat",
+          "weight": 20,
+          "sets": [
+            8,
+            8,
+            null
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1775809730211,
+      "endTime": 1775813911433
+    },
+    {
+      "id": "1775635025851",
+      "date": "2026-04-08T07:57:05.852Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Mountain Climbers",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Plank (seconds)",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Lunges (each leg)",
+          "weight": 0,
+          "sets": [
+            8
+          ],
+          "targetReps": 8,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 70,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Bench Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Curl",
+          "weight": 20,
+          "sets": [
+            10,
+            10,
+            10
+          ],
+          "targetReps": 10,
+          "category": "accessory"
+        },
+        {
+          "name": "Barbell Hip Thrust",
+          "weight": 20,
+          "sets": [
+            10,
+            10,
+            10
+          ],
+          "targetReps": 10,
+          "category": "accessory"
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1775635025853,
+      "endTime": 1775637856280
+    },
+    {
+      "id": "1775457049683",
+      "date": "2026-04-06T06:30:49.685Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Jumping Jacks",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Pelvic Bridges",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Cat-Cow Stretch",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Arm Circles",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 65,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Deadlift",
+          "weight": 90,
+          "sets": [
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Chin-ups",
+          "weight": 0,
+          "sets": [
+            6,
+            4,
+            5
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        },
+        {
+          "name": "Bulgarian Split Squat",
+          "weight": 20,
+          "sets": [
+            8,
+            8,
+            8
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1775457049689,
+      "endTime": 1775460249346
+    },
+    {
+      "id": "1775190683128",
+      "date": "2026-04-03T04:31:23.128Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Mountain Climbers",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Plank (seconds)",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Lunges (each leg)",
+          "weight": 0,
+          "sets": [
+            8
+          ],
+          "targetReps": 8,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 65,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Bench Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Curl",
+          "weight": 20,
+          "sets": [
+            10,
+            10,
+            9
+          ],
+          "targetReps": 10,
+          "category": "accessory",
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Hip Thrust",
+          "weight": 20,
+          "sets": [
+            10,
+            10,
+            10
+          ],
+          "targetReps": 10,
+          "category": "accessory",
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1775190683128,
+      "endTime": 1775193590883
+    },
+    {
+      "id": "1775023668051",
+      "date": "2026-04-01T06:07:48.052Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Jumping Jacks",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Pelvic Bridges",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Cat-Cow Stretch",
+          "weight": 0,
+          "sets": [
+            10
+          ],
+          "targetReps": 10,
+          "category": "warmup"
+        },
+        {
+          "name": "Arm Circles",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 60,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 2,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Deadlift",
+          "weight": 90,
+          "sets": [
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Chin-ups",
+          "weight": 0,
+          "sets": [
+            3,
+            5,
+            4
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        },
+        {
+          "name": "Bulgarian Split Squat",
+          "weight": 20,
+          "sets": [
+            8,
+            8,
+            8
+          ],
+          "targetReps": 8,
+          "category": "accessory"
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1775023668054,
+      "endTime": 1775027101553
+    },
+    {
+      "id": "1774851740154",
+      "date": "2026-03-30T06:22:20.154Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Mountain Climbers",
+          "weight": 0,
+          "sets": [
+            20
+          ],
+          "targetReps": 20,
+          "category": "warmup"
+        },
+        {
+          "name": "Plank (seconds)",
+          "weight": 0,
+          "sets": [
+            30
+          ],
+          "targetReps": 30,
+          "category": "warmup"
+        },
+        {
+          "name": "Lunges (each leg)",
+          "weight": 0,
+          "sets": [
+            8
+          ],
+          "targetReps": 8,
+          "category": "warmup"
+        },
+        {
+          "name": "Squat",
+          "weight": 60,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Bench Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "targetReps": 5,
+          "category": "main"
+        },
+        {
+          "name": "Barbell Curl",
+          "weight": 15,
+          "sets": [
+            9,
+            9,
+            9
+          ],
+          "targetReps": 10,
+          "category": "accessory"
+        },
+        {
+          "name": "Barbell Hip Thrust",
+          "weight": 30,
+          "sets": [
+            null,
+            null,
+            null
+          ],
+          "targetReps": 10,
+          "category": "accessory"
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1774851740154,
+      "endTime": 1774853771138
+    },
+    {
+      "id": "1774590947714",
+      "date": "2026-03-27T05:55:47.714Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 80,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 45,
+          "sets": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Deadlift",
+          "weight": 90,
+          "sets": [
+            0
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1774590947718,
+      "endTime": 1774595980702
+    },
+    {
+      "id": "1774415917191",
+      "date": "2026-03-25T05:18:37.191Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 75,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Bench Press",
+          "weight": 45,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 45,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1774415917196,
+      "endTime": 1774419355168
+    },
+    {
+      "id": "1774256362072",
+      "date": "2026-03-23T08:59:22.072Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 75,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            4
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 45,
+          "sets": [
+            2,
+            5,
+            0,
+            0,
+            0
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Deadlift",
+          "weight": 90,
+          "sets": [
+            0
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1774256362072,
+      "endTime": 1774260804641
+    },
+    {
+      "id": "1773987827223",
+      "date": "2026-03-20T06:23:47.223Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 75,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773987827223,
+      "endTime": 1773990538642
+    },
+    {
+      "id": "1773822391088",
+      "date": "2026-03-18T08:26:31.088Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 70,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Deadlift",
+          "weight": 80,
+          "sets": [
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773822391088,
+      "endTime": 1773827328930
+    },
+    {
+      "id": "1773649854803",
+      "date": "2026-03-16T08:30:54.803Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 70,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773649854803,
+      "endTime": 1773652889667
+    },
+    {
+      "id": "1773382614269",
+      "date": "2026-03-13T06:16:54.269Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 65,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Deadlift",
+          "weight": 80,
+          "sets": [
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773382614269,
+      "endTime": 1773385882067
+    },
+    {
+      "id": "1773209431187",
+      "date": "2026-03-11T06:10:31.187Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 65,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773209431187,
+      "endTime": 1773211696293
+    },
+    {
+      "id": "1773045276871",
+      "date": "2026-03-09T08:34:36.871Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 60,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Deadlift",
+          "weight": 70,
+          "sets": [
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1773045276871,
+      "endTime": 1773048406513
+    },
+    {
+      "id": "1772771855459",
+      "date": "2026-03-06T04:37:35.459Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 60,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1772771855459,
+      "endTime": 1772773617333
+    },
+    {
+      "id": "1772602667652",
+      "date": "2026-03-04T05:37:47.652Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 55,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Deadlift",
+          "weight": 70,
+          "sets": [
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1772602667652,
+      "endTime": 1772605165548
+    },
+    {
+      "id": "1772431554181",
+      "date": "2026-03-02T06:05:54.181Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 55,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1772431554181,
+      "endTime": 1772434049079
+    },
+    {
+      "id": "1772176052855",
+      "date": "2026-02-27T07:07:32.856Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 50,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Deadlift",
+          "weight": 60,
+          "sets": [
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1772176052857,
+      "endTime": 1772177401314
+    },
+    {
+      "id": "1771990277571",
+      "date": "2026-02-25T03:31:17.571Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 50,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1771990277571,
+      "endTime": 1771991897432
+    },
+    {
+      "id": "1771820318640",
+      "date": "2026-02-23T04:18:38.640Z",
+      "type": "B",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 55,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 30,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Deadlift",
+          "weight": 60,
+          "sets": [
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1771820318640,
+      "endTime": 1771822303421
+    },
+    {
+      "id": "1771474874514",
+      "date": "2026-02-19T04:21:14.514Z",
+      "type": "A",
+      "customName": "",
+      "exercises": [
+        {
+          "name": "Squat",
+          "weight": 55,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Bench Press",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        },
+        {
+          "name": "Barbell Row",
+          "weight": 35,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1
+        }
+      ],
+      "notes": "",
+      "completed": true,
+      "startTime": 1771474874514,
+      "endTime": 1771477656644
+    },
+    {
+      "id": "1768896335738",
+      "exercises": [
+        {
+          "name": "Squat",
+          "attempt": 1,
+          "weight": 70,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        {
+          "weight": 45,
+          "attempt": 1,
+          "name": "Overhead Press",
+          "sets": [
+            1,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "attempt": 2,
+          "weight": 60,
+          "sets": [
+            5
+          ],
+          "name": "Deadlift"
+        }
+      ],
+      "customName": "",
+      "notes": "",
+      "type": "B",
+      "date": "2026-01-20T08:05:35.738Z",
+      "startTime": 1768896335738,
+      "completed": true,
+      "endTime": 1768898743758
+    },
+    {
+      "customName": "",
+      "date": "2026-01-16T10:48:40.566Z",
+      "completed": true,
+      "type": "A",
+      "id": "1768560520566",
+      "endTime": 1768563812688,
+      "notes": "",
+      "exercises": [
+        {
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "weight": 65,
+          "attempt": 2,
+          "name": "Squat"
+        },
+        {
+          "attempt": 1,
+          "weight": 45,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            1
+          ],
+          "name": "Bench Press"
+        },
+        {
+          "weight": 45,
+          "name": "Barbell Row",
+          "attempt": 1,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        }
+      ],
+      "startTime": 1768560520566
+    },
+    {
+      "date": "2026-01-14T11:04:14.617Z",
+      "type": "B",
+      "endTime": 1768395413567,
+      "completed": true,
+      "id": "1768388654617",
+      "notes": "",
+      "startTime": 1768388654617,
+      "customName": "",
+      "exercises": [
+        {
+          "weight": 65,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "name": "Squat"
+        },
+        {
+          "weight": 40,
+          "name": "Overhead Press",
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 2
+        },
+        {
+          "weight": 60,
+          "sets": [
+            5
+          ],
+          "name": "Deadlift",
+          "attempt": 1
+        }
+      ]
+    },
+    {
+      "notes": "",
+      "completed": true,
+      "date": "2026-01-12T08:29:29.088Z",
+      "id": "1768206569088",
+      "type": "A",
+      "startTime": 1768206569089,
+      "customName": "",
+      "endTime": 1768209456730,
+      "exercises": [
+        {
+          "attempt": 2,
+          "weight": 60,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "name": "Squat"
+        },
+        {
+          "attempt": 2,
+          "name": "Bench Press",
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        {
+          "attempt": 2,
+          "name": "Barbell Row",
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "weight": 40
+        }
+      ]
+    },
+    {
+      "exercises": [
+        {
+          "attempt": 1,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "weight": 60,
+          "name": "Squat"
+        },
+        {
+          "name": "Overhead Press",
+          "weight": 40,
+          "sets": [
+            5,
+            3,
+            5,
+            1,
+            1
+          ],
+          "attempt": 1
+        },
+        {
+          "weight": 50,
+          "name": "Deadlift",
+          "sets": [
+            5
+          ],
+          "attempt": 2
+        }
+      ],
+      "endTime": 1767937182986,
+      "date": "2026-01-09T04:44:57.510Z",
+      "customName": "",
+      "id": "1767933897510",
+      "completed": true,
+      "type": "B",
+      "notes": "",
+      "startTime": 1767933897510
+    },
+    {
+      "type": "A",
+      "date": "2026-01-07T14:05:36.729Z",
+      "notes": "",
+      "exercises": [
+        {
+          "attempt": 2,
+          "name": "Squat",
+          "weight": 55,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        {
+          "name": "Bench Press",
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "weight": 40
+        },
+        {
+          "weight": 40,
+          "sets": [
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "attempt": 1,
+          "name": "Barbell Row"
+        }
+      ],
+      "id": "1767794736729",
+      "startTime": 1767794736739,
+      "endTime": 1767801793484,
+      "customName": "",
+      "completed": true
+    }
+  ],
+  "unit": "kg",
+  "schedule": {
+    "flexible": true,
+    "frequency": 3,
+    "preferredDays": [
+      1,
+      3,
+      5
+    ]
+  },
+  "exerciseAttempts": {
+    "Barbell Row": 2,
+    "Bench Press": 2,
+    "Deadlift": 2,
+    "Overhead Press": 2,
+    "Squat": 1,
+    "Barbell Hip Thrust": 1,
+    "Barbell Curl": 1
+  },
+  "repeatCount": {
+    "Barbell Row": 2,
+    "Bench Press": 2,
+    "Deadlift": 2,
+    "Overhead Press": 2,
+    "Squat": 2
+  },
+  "weightIncrements": {
+    "Barbell Row": 5,
+    "Bench Press": 5,
+    "Deadlift": 10,
+    "Overhead Press": 5,
+    "Squat": 5
+  },
+  "name": "James",
+  "consecutiveFailures": {
+    "Barbell Row": 0,
+    "Bench Press": 0,
+    "Deadlift": 0,
+    "Overhead Press": 0,
+    "Squat": 0
+  },
+  "bodyWeight": 0,
+  "warmups": {
+    "A": [
+      {
+        "name": "Mountain Climbers",
+        "sets": 1,
+        "targetReps": 20
+      },
+      {
+        "name": "Plank (seconds)",
+        "sets": 1,
+        "targetReps": 30
+      },
+      {
+        "name": "Lunges (each leg)",
+        "sets": 1,
+        "targetReps": 8
+      }
+    ],
+    "B": [
+      {
+        "name": "Jumping Jacks",
+        "sets": 1,
+        "targetReps": 30
+      },
+      {
+        "name": "Pelvic Bridges",
+        "sets": 1,
+        "targetReps": 10
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "sets": 1,
+        "targetReps": 10
+      },
+      {
+        "name": "Arm Circles",
+        "sets": 1,
+        "targetReps": 20
+      }
+    ]
+  },
+  "restTimerStartMinimized": true
+}

@@ -22,9 +22,8 @@ import { getMotivationSummary, getStallMessage, pick, MSG } from './utils/motiva
 import { calculateProgression } from './utils/progressionUtils';
 import { applyTheme, getStoredTheme, initializeTheme, type Theme } from './utils/themeColors';
 import { AuthModal } from './components/AuthModal';
-import { onAuthStateChange, getCurrentUser, signOut, isAuthAvailable } from './services/authService';
+import { getCurrentUser, signOut, isAuthAvailable, type CloudUser } from './services/authService';
 import { saveToCloud, loadFromCloud, mergeData, isSyncAvailable } from './services/syncService';
-import type { User as FirebaseUser } from 'firebase/auth';
 
 declare const __BUILD_TIMESTAMP__: string;
 
@@ -83,13 +82,15 @@ const PROGRAMS = {
 const DEFAULT_WARMUPS = {
   A: [
     { name: 'Jumping Jacks', sets: 1, targetReps: 30 },
+    { name: 'Arm Circles', sets: 1, targetReps: 20 },
     { name: 'Bodyweight Squats', sets: 1, targetReps: 10 },
     { name: 'Plank (seconds)', sets: 1, targetReps: 30 },
   ],
   B: [
     { name: 'Mountain Climbers', sets: 1, targetReps: 20 },
-    { name: 'Knee High Raises', sets: 1, targetReps: 20 },
-    { name: 'Pelvic Bridges', sets: 1, targetReps: 10 },
+    { name: 'Hip Circles', sets: 1, targetReps: 10 },
+    { name: 'Lunges (each leg)', sets: 1, targetReps: 8 },
+    { name: 'Dead Bugs', sets: 1, targetReps: 10 },
   ],
 };
 
@@ -151,7 +152,7 @@ export default function App() {
   
   // Cloud Sync / Authentication state
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [cloudUser, setCloudUser] = useState<CloudUser | null>(null);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
@@ -331,83 +332,68 @@ export default function App() {
     }
   }, []);
 
-  // Auth state listener - watch for sign in/out
+  // Restore session from localStorage and merge with VPS profile when signed in
   useEffect(() => {
     if (!isAuthAvailable()) return;
 
-    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
-      setFirebaseUser(firebaseUser);
-      
-      if (firebaseUser) {
-        // User signed in - load data from cloud and merge with local
-        console.log('✅ User signed in:', firebaseUser.email);
-        try {
-          setSyncStatus('syncing');
-          
-          // Get current local data
-          const localSaved = localStorage.getItem('tizi_tracker_data');
-          const localData = localSaved ? JSON.parse(localSaved) : user;
-          
-          const cloudData = await loadFromCloud();
-          
-          if (cloudData) {
-            // Merge cloud data with local data
-            const merged = mergeData(localData, cloudData);
-            setUser(merged);
-            // Save merged data locally
-            localStorage.setItem('tizi_tracker_data', JSON.stringify(merged));
-            console.log('✅ Cloud data merged with local data');
-          } else {
-            // No cloud data yet - offer to sync local data to cloud
-            if (localData.history && localData.history.length > 0) {
-              const shouldSync = window.confirm(
-                'Would you like to sync your existing workout data to the cloud?\n\n' +
-                'This will make your data available on all devices.'
-              );
-              if (shouldSync) {
-                await saveToCloud(localData);
-                setSyncStatus('synced');
-                setLastSynced(new Date());
-              }
-            }
+    const sessionUser = getCurrentUser();
+    setCloudUser(sessionUser);
+    if (!sessionUser) return;
+
+    (async () => {
+      console.log('✅ Session restored:', sessionUser.email);
+      try {
+        setSyncStatus('syncing');
+
+        const localSaved = localStorage.getItem('tizi_tracker_data');
+        const localData: UserProfile = localSaved
+          ? (JSON.parse(localSaved) as UserProfile)
+          : INITIAL_STATE;
+
+        const cloudData = await loadFromCloud();
+
+        if (cloudData) {
+          const merged = mergeData(localData, cloudData);
+          setUser(merged);
+          localStorage.setItem('tizi_tracker_data', JSON.stringify(merged));
+          console.log('✅ Server profile merged with local data');
+        } else if (localData.history && localData.history.length > 0) {
+          const shouldSync = window.confirm(
+            'Upload your existing workout data to your server?\n\n' +
+              'This stores your history on your VPS so other devices can load it.'
+          );
+          if (shouldSync) {
+            await saveToCloud(localData);
           }
-          setSyncStatus('synced');
-          setLastSynced(new Date());
-        } catch (error) {
-          console.error('❌ Failed to sync on sign-in:', error);
-          setSyncStatus('error');
         }
-      } else {
-        // User signed out
-        console.log('ℹ️ User signed out');
-        setSyncStatus('idle');
-        setLastSynced(null);
+        setSyncStatus('synced');
+        setLastSynced(new Date());
+      } catch (error) {
+        console.error('❌ Failed to sync after session restore:', error);
+        setSyncStatus('error');
       }
-    });
+    })();
+  }, []);
 
-    return () => unsubscribe();
-  }, []); // Only run once on mount
-
-  // Sync to cloud when user data changes (if signed in)
+  // Sync to VPS when user data changes (if signed in)
   useEffect(() => {
-    if (!isSyncAvailable() || !firebaseUser) return;
+    if (!isSyncAvailable() || !cloudUser) return;
 
-    // Debounce sync - only sync after a short delay to avoid too many requests
     const syncTimeout = setTimeout(async () => {
       try {
         setSyncStatus('syncing');
         await saveToCloud(user);
         setSyncStatus('synced');
         setLastSynced(new Date());
-        console.log('✅ Data synced to cloud');
+        console.log('✅ Data synced to server');
       } catch (error) {
-        console.error('❌ Failed to sync to cloud:', error);
+        console.error('❌ Failed to sync to server:', error);
         setSyncStatus('error');
       }
-    }, 2000); // Wait 2 seconds after last change before syncing
+    }, 2000);
 
     return () => clearTimeout(syncTimeout);
-  }, [user, firebaseUser]); // Sync whenever user data or auth state changes
+  }, [user, cloudUser]);
 
   // Save to localStorage (always, regardless of cloud sync)
   useEffect(() => {
@@ -1137,7 +1123,7 @@ export default function App() {
                          ? i >= goal
                            ? 'bg-primary/80 text-primary-content ring-2 ring-primary/40'
                            : 'bg-success text-success-content'
-                         : 'bg-base-300 text-base-content/40'
+                         : 'bg-base-300 text-base-content/60 border border-base-content/20'
                      }`}
                    >
                      {i < done ? <Check size={14} strokeWidth={3} /> : ''}
@@ -1194,7 +1180,7 @@ export default function App() {
                </span>
              ))}
              {recentWorkout.exercises.length > 3 && (
-               <span className="text-sm text-base-content/50">
+               <span className="text-sm text-base-content/70">
                  +{recentWorkout.exercises.length - 3} more
                </span>
              )}
@@ -1400,7 +1386,7 @@ export default function App() {
                             <span className="text-xs font-bold uppercase tracking-wider text-info">Warmup</span>
                             <div className="flex-1 h-px bg-info/20" />
                           </div>
-                          <div className="text-xs text-info/60 -mt-1 mb-2 ml-6">
+                          <div className="text-xs text-base-content/80 -mt-1 mb-2 ml-6 font-medium">
                             Quick circuit -- 1 set each, minimal rest between exercises
                           </div>
                           {renderCards(warmups)}
@@ -1436,7 +1422,7 @@ export default function App() {
                 
                 <button
                     onClick={() => setAddExerciseModalOpen(true)}
-                    className="w-full py-4 border-2 border-dashed border-base-300 rounded-2xl text-base-content/50 hover:text-base-content/70 hover:border-base-content/30 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 border-2 border-dashed border-base-300 rounded-2xl text-base-content/70 hover:text-base-content hover:border-base-content/40 transition-all flex items-center justify-center gap-2"
                 >
                     <PlusCircle size={20} /> Add Exercise
                 </button>
@@ -1506,7 +1492,7 @@ export default function App() {
                   <LineChart size={20} />
                   <span className="text-[10px] font-bold uppercase tracking-tighter">Trends</span>
               </button>
-              <span className="absolute bottom-0.5 right-2 text-[8px] text-base-content/25 font-mono select-none">v{APP_VERSION}</span>
+              <span className="absolute bottom-0.5 right-2 text-[8px] text-base-content/50 font-mono select-none">v{APP_VERSION}</span>
           </div>
       </div>
 
@@ -1590,7 +1576,7 @@ export default function App() {
             setUser(resetState);
             
             // If signed in, immediately sync the reset state to cloud (no debounce)
-            if (firebaseUser && isSyncAvailable()) {
+            if (cloudUser && isSyncAvailable()) {
               try {
                 setSyncStatus('syncing');
                 await saveToCloud(resetState);
@@ -1605,14 +1591,16 @@ export default function App() {
           }
         }}
         onUpdate={(data) => setUser(data)}
-        firebaseUser={firebaseUser}
+        cloudUser={cloudUser}
         syncStatus={syncStatus}
         lastSynced={lastSynced}
         onOpenAuth={() => setAuthModalOpen(true)}
         onSignOut={async () => {
           try {
             await signOut();
-            setFirebaseUser(null);
+            setCloudUser(null);
+            setSyncStatus('idle');
+            setLastSynced(null);
           } catch (error) {
             console.error('Failed to sign out:', error);
           }
@@ -1647,7 +1635,37 @@ export default function App() {
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={() => {
           setAuthModalOpen(false);
-          // Auth state change will trigger sync in useEffect
+          const sessionUser = getCurrentUser();
+          setCloudUser(sessionUser);
+          if (!sessionUser || !isSyncAvailable()) return;
+          (async () => {
+            try {
+              setSyncStatus('syncing');
+              const localSaved = localStorage.getItem('tizi_tracker_data');
+              const localData: UserProfile = localSaved
+                ? (JSON.parse(localSaved) as UserProfile)
+                : INITIAL_STATE;
+              const cloudData = await loadFromCloud();
+              if (cloudData) {
+                const merged = mergeData(localData, cloudData);
+                setUser(merged);
+                localStorage.setItem('tizi_tracker_data', JSON.stringify(merged));
+              } else if (localData.history && localData.history.length > 0) {
+                const shouldSync = window.confirm(
+                  'Upload your existing workout data to your server?\n\n' +
+                    'This stores your history on your VPS so other devices can load it.'
+                );
+                if (shouldSync) {
+                  await saveToCloud(localData);
+                }
+              }
+              setSyncStatus('synced');
+              setLastSynced(new Date());
+            } catch (error) {
+              console.error('❌ Failed to sync after sign-in:', error);
+              setSyncStatus('error');
+            }
+          })();
         }}
       />
 

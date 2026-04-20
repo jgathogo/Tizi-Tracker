@@ -88,7 +88,7 @@ export const themeColors = {
   textPrimary: 'text-base-content',
   textSecondary: 'text-base-content/70',
   textTertiary: 'text-base-content/60',
-  textMuted: 'text-base-content/50',
+  textMuted: 'text-base-content/60',
   
   overlay: 'bg-black/80',
 };

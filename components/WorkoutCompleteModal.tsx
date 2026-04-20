@@ -297,7 +297,7 @@ export const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
                   </div>
                 )}
                 {motivationAfter.sessionStreak > 0 && motivationAfter.workoutsThisMonth > 0 && (
-                  <span className="text-base-content/30">·</span>
+                  <span className="text-base-content/60">·</span>
                 )}
                 {motivationAfter.workoutsThisMonth > 0 && (
                   <span className="text-sm text-base-content/70">

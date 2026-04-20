@@ -17,8 +17,7 @@ const WARMUP_POOL = [
   { name: 'Cat-Cow Stretch', targetReps: 10, category: 'mobility' },
   { name: 'Hip Circles', targetReps: 10, category: 'mobility' },
 ] as const;
-import type { User as FirebaseUser } from 'firebase/auth';
-import { isAuthAvailable } from '../services/authService';
+import { isAuthAvailable, type CloudUser } from '../services/authService';
 import { isSyncAvailable, saveToCloud } from '../services/syncService';
 import type { Theme } from '../utils/themeColors';
 import { availableThemes } from '../utils/themeColors';
@@ -32,7 +31,7 @@ interface SettingsModalProps {
   onImport: (data: UserProfile) => void;
   onReset: () => Promise<void>;
   onUpdate: (data: UserProfile) => void;
-  firebaseUser?: FirebaseUser | null;
+  cloudUser?: CloudUser | null;
   syncStatus?: 'idle' | 'syncing' | 'synced' | 'error';
   lastSynced?: Date | null;
   onOpenAuth?: () => void;
@@ -48,7 +47,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onImport, 
   onReset, 
   onUpdate,
-  firebaseUser,
+  cloudUser,
   syncStatus = 'idle',
   lastSynced,
   onOpenAuth,
@@ -170,7 +169,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
                 </div>
-                <FileJson size={18} className="text-base-content/50" />
+                <FileJson size={18} className="text-base-content/60" />
             </button>
           </div>
 
@@ -201,7 +200,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
                 </div>
-                <FileJson size={18} className="text-base-content/50" />
+                <FileJson size={18} className="text-base-content/60" />
             </button>
             {error && <div className="text-error text-xs px-2">{error}</div>}
           </div>
@@ -262,7 +261,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <User size={14} /> Profile
               </h4>
               {!user.name && (
-                <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-1 rounded-full">
+                <span className="text-xs text-warning bg-warning/15 border border-warning/30 px-2 py-1 rounded-full">
                   Name required
                 </span>
               )}
@@ -279,7 +278,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onUpdate({ ...user, name: e.target.value });
                 }}
                 placeholder="Enter your name"
-                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
@@ -312,7 +311,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder="e.g., 175"
                 min="0"
                 step="0.1"
-                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
 
@@ -331,7 +330,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder={`e.g., 75`}
                 min="0"
                 step="0.1"
-                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-base-300/50 border border-base-300 rounded-lg text-base-content placeholder-base-content/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -425,7 +424,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               ))}
             </div>
-            <div className="text-xs text-base-content/50">
+            <div className="text-xs text-base-content/60">
               3x5 is recommended for lifters 40+ (less fatigue, same strength gains). 5x5 adds more volume for muscle growth.
             </div>
           </div>
@@ -456,7 +455,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <h4 className="text-sm font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-2">
                   <Activity size={14} /> Workout {day} Warmup
                 </h4>
-                <div className="text-xs text-base-content/50 mb-1">
+                <div className="text-xs text-base-content/60 mb-1">
                   Pick 3-4 exercises. Mix cardio, lower body, and core for a balanced warmup.
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -469,7 +468,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           isActive
                             ? 'bg-info/20 text-info border border-info/40'
-                            : 'bg-base-300/50 text-base-content/50 border border-base-300 hover:border-info/30'
+                            : 'bg-base-300/50 text-base-content/60 border border-base-300 hover:border-info/30'
                         }`}
                       >
                         {exercise.name} ({exercise.targetReps})
@@ -526,7 +525,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 );
               })}
             </div>
-            <div className="text-xs text-base-content/50 mt-2">
+            <div className="text-xs text-base-content/60 mt-2">
               After completing the required number of successful workouts at a weight, the app will automatically increase the weight.
             </div>
           </div>
@@ -574,7 +573,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 );
               })}
             </div>
-            <div className="text-xs text-base-content/50 mt-2">
+            <div className="text-xs text-base-content/60 mt-2">
               These increments are used when automatically progressing weights after completing required attempts.
             </div>
           </div>
@@ -588,25 +587,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Cloud size={14} /> Cloud Sync
               </h4>
               
-              {firebaseUser ? (
+              {cloudUser ? (
                 // Signed in
                 <div className="space-y-3">
-                  <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
+                  <div className="bg-success/10 border border-success/30 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 size={16} className="text-green-400" />
-                        <span className="text-sm font-medium text-green-300">Signed in</span>
+                        <CheckCircle2 size={16} className="text-success" />
+                        <span className="text-sm font-medium text-success">Signed in</span>
                       </div>
                       <button
                         onClick={onSignOut}
-                        className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                        className="text-xs text-error hover:text-error/80 flex items-center gap-1 transition-colors"
                       >
                         <LogOut size={12} />
                         Sign out
                       </button>
                     </div>
                     <div className="text-xs text-base-content/60">
-                      {firebaseUser.email}
+                      {cloudUser.email}
                     </div>
                   </div>
 
@@ -639,7 +638,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       )}
                     </div>
                     {lastSynced && (
-                      <span className="text-xs text-base-content/50">
+                      <span className="text-xs text-base-content/70">
                         {lastSynced.toLocaleTimeString()}
                       </span>
                     )}
@@ -660,7 +659,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       }
                     }}
                     disabled={manualSyncLoading || syncStatus === 'syncing' || !isSyncAvailable()}
-                    className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-600/30 rounded-xl transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-info/15 hover:bg-info/25 text-info border border-info/30 rounded-xl transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {manualSyncLoading ? (
                       <>
@@ -675,9 +674,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     )}
                   </button>
 
-                  <div className="text-xs text-base-content/50 mt-2">
-                    Your data automatically syncs to the cloud when online. 
-                    All data is encrypted and only you can access it.
+                  <div className="text-xs text-base-content/60 mt-2">
+                    Your data syncs to your server when online (JWT in this browser).
                   </div>
                 </div>
               ) : (
@@ -696,7 +694,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       Sign In / Sign Up
                     </button>
                   </div>
-                  <div className="text-xs text-base-content/50">
+                  <div className="text-xs text-base-content/60">
                     Cloud sync is optional. Your data is always saved locally and can be exported.
                   </div>
                 </div>
@@ -708,7 +706,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Danger Zone */}
           <div className="space-y-2">
-             <h4 className="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+             <h4 className="text-sm font-bold text-error uppercase tracking-wider flex items-center gap-2">
                  <AlertTriangle size={14} /> Danger Zone
              </h4>
              <button 
@@ -716,7 +714,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     await onReset();
                     onClose();
                 }}
-                className="w-full flex items-center justify-center gap-2 p-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-xl transition-colors font-medium text-sm"
+                className="w-full flex items-center justify-center gap-2 p-3 bg-error/10 hover:bg-error/20 text-error border border-error/40 rounded-xl transition-colors font-medium text-sm"
             >
                 <Trash2 size={16} /> Reset All Data
              </button>

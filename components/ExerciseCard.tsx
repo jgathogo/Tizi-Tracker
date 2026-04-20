@@ -61,10 +61,14 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   const isAccessory = exercise.category === 'accessory';
 
   const getCircleColor = (reps: number | null) => {
-    if (reps === null) return 'bg-base-300 text-transparent border-base-300';
-    if (reps === target) return 'bg-success text-success-content border-success shadow-[0_0_15px_rgba(34,197,94,0.4)]';
-    if (reps === 0) return 'bg-error/20 text-error-content border-error';
-    return 'bg-warning text-warning-content border-warning';
+    if (reps === null) {
+      return 'bg-base-300 text-base-content/60 border-2 border-base-content/45 ring-1 ring-base-content/25';
+    }
+    if (reps === target) {
+      return 'bg-success text-success-content border-2 border-success ring-2 ring-success/40';
+    }
+    if (reps === 0) return 'bg-error/20 text-error border-2 border-error';
+    return 'bg-warning text-warning-content border-2 border-warning';
   };
 
   const cardBorder = isWarmup
@@ -113,7 +117,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             )}
           </div>
           {isWarmup ? (
-            <div className="text-sm text-base-content/50 mt-1">
+            <div className="text-sm text-base-content/70 mt-1">
               {target} {exercise.name.includes('seconds') || exercise.name.includes('Plank') ? 'sec' : 'reps'} per set
             </div>
           ) : (
@@ -127,7 +131,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                    <span className="text-3xl font-bold text-primary group-hover:text-primary/80 transition-colors">{exercise.weight}</span>
                    <span className="text-sm font-medium text-base-content/60">{unit}</span>
                  </div>
-                 <Edit2 size={16} className="text-base-content/50 group-hover:text-primary transition-colors" />
+                 <Edit2 size={16} className="text-base-content/70 group-hover:text-primary transition-colors" />
               </button>
               {(() => {
                 const weightPerSide = getWeightPerSide(exercise.weight, unit as 'kg' | 'lb');
@@ -135,10 +139,10 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
                 if (weightPerSide <= 0) return null;
                 return (
-                  <div className="text-xs text-base-content/60 ml-2">
+                  <div className="text-xs text-base-content/70 ml-2">
                     <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
                     {plates.length > 0 && (
-                      <span className="text-base-content/50 ml-2">({plateText})</span>
+                      <span className="text-base-content/60 ml-2">({plateText})</span>
                     )}
                   </div>
                 );
@@ -161,7 +165,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               href={FORM_VIDEOS[exercise.name]}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 bg-base-200 hover:bg-red-900/30 text-base-content/70 hover:text-red-400 rounded-lg transition-colors"
+              className="p-2 bg-base-200 hover:bg-error/15 text-base-content/70 hover:text-error rounded-lg transition-colors"
               title="Watch form video"
             >
               <Youtube size={20} />
@@ -173,16 +177,16 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
       <div className="flex justify-between gap-2 md:gap-4">
         {exercise.sets.map((reps, index) => (
           <div key={index} className="flex flex-col items-center gap-2">
-             <span className="text-xs text-base-content/50 font-medium">Set {index + 1}</span>
+             <span className="text-xs text-base-content/70 font-semibold">Set {index + 1}</span>
              <button
                onClick={() => {
                  let nextReps = reps === null ? target : reps - 1;
                  if (nextReps < 0) nextReps = target;
                  onSetUpdate(index, nextReps);
                }}
-               className={`w-12 h-12 md:w-14 md:h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${getCircleColor(reps)}`}
+               className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl font-extrabold transition-all duration-200 transform hover:scale-105 active:scale-95 ${getCircleColor(reps)}`}
              >
-               {reps !== null ? reps : ''}
+               {reps !== null ? reps : '—'}
              </button>
           </div>
         ))}

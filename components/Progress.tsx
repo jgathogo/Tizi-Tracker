@@ -1,19 +1,24 @@
 import React from 'react';
 import { UserProfile, ExerciseName } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import type { Theme } from '../App';
+import type { Theme } from '../utils/themeColors';
 
 interface ProgressProps {
   history: UserProfile['history'];
   theme?: Theme;
 }
 
-// DaisyUI dark themes for chart styling
-const DARK_THEMES = ['dark', 'synthwave', 'halloween', 'forest', 'black', 'luxury', 'dracula', 'night', 'coffee', 'business'];
+/** Chart chrome follows active DaisyUI theme via CSS variables (not hardcoded slate hex). */
+const CHART = {
+  gridStroke: 'oklch(var(--bc) / 0.22)',
+  axisStroke: 'oklch(var(--bc) / 0.65)',
+  tooltipBg: 'oklch(var(--b2))',
+  tooltipBorder: 'oklch(var(--b3))',
+  tooltipText: 'oklch(var(--bc))',
+  tooltipItem: 'oklch(var(--bc) / 0.85)',
+} as const;
 
-export const Progress: React.FC<ProgressProps> = ({ history, theme = 'dark' }) => {
-  // Check if current theme is dark-based
-  const isDark = DARK_THEMES.includes(theme);
+export const Progress: React.FC<ProgressProps> = ({ history, theme: _theme = 'dark' }) => {
   
   // Transform history into chart data
   // Structure: { date: '2023-01-01', Squat: 100, Bench: 80, ... }
@@ -48,25 +53,25 @@ export const Progress: React.FC<ProgressProps> = ({ history, theme = 'dark' }) =
       ) : (
         <ResponsiveContainer width="100%" height="90%">
             <LineChart data={sortedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#cbd5e1'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.gridStroke} />
             <XAxis 
               dataKey="date" 
-              stroke={isDark ? '#94a3b8' : '#64748b'} 
+              stroke={CHART.axisStroke}
               fontSize={12} 
               tickMargin={10} 
             />
             <YAxis 
-              stroke={isDark ? '#94a3b8' : '#64748b'} 
+              stroke={CHART.axisStroke}
               fontSize={12} 
               domain={['dataMin - 10', 'auto']} 
             />
             <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                  borderColor: isDark ? '#475569' : '#cbd5e1',
-                  color: isDark ? '#f8fafc' : '#1e293b'
+                  backgroundColor: CHART.tooltipBg,
+                  borderColor: CHART.tooltipBorder,
+                  color: CHART.tooltipText,
                 }}
-                itemStyle={{ color: isDark ? '#cbd5e1' : '#475569' }}
+                itemStyle={{ color: CHART.tooltipItem }}
             />
             <Legend />
             {(Object.keys(colors) as ExerciseName[]).map(ex => (

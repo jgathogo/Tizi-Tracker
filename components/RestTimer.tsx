@@ -253,7 +253,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ initialSeconds = 90, autoS
         {minimized ? (
            <button 
              onClick={() => setMinimized(false)}
-             className="w-full h-full flex items-center justify-center bg-red-600 hover:bg-red-500 rounded-2xl"
+             className="w-full h-full flex items-center justify-center bg-error hover:bg-error/90 rounded-2xl text-error-content"
            >
              <div className="text-sm font-bold">{formatTime(seconds)}</div>
            </button>

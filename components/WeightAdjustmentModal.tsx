@@ -59,7 +59,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
                 className="bg-transparent text-5xl font-bold text-base-content text-center w-48 focus:outline-none focus:border-b-2 focus:border-primary transition-all"
                 step="any"
               />
-              <span className="text-xl font-medium text-base-content/50 mt-4">{unit}</span>
+              <span className="text-xl font-medium text-base-content/70 mt-4">{unit}</span>
             </div>
           </div>
 
@@ -70,7 +70,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
                 <button
                   key={`-${inc}`}
                   onClick={() => handleIncrement(-inc)}
-                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
+                  className="bg-error/10 hover:bg-error/20 text-error border border-error/30 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
                 >
                   <Minus size={14} /> {inc}
                 </button>
@@ -83,7 +83,7 @@ export const WeightAdjustmentModal: React.FC<WeightAdjustmentModalProps> = ({
                 <button
                   key={`+${inc}`}
                   onClick={() => handleIncrement(inc)}
-                  className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
+                  className="bg-success/10 hover:bg-success/20 text-success border border-success/30 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
                 >
                   <Plus size={14} /> {inc}
                 </button>

@@ -130,7 +130,7 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
                  <div className="text-xs text-base-content/60 mt-1">
                    <span className="font-medium">{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit} / side</span>
                    {plates.length > 0 && (
-                     <span className="text-base-content/50 ml-2">({plateText})</span>
+                     <span className="text-base-content/60 ml-2">({plateText})</span>
                    )}
                  </div>
                );
@@ -204,7 +204,7 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
                         const plateText = formatPlateBreakdown(plates, unit as 'kg' | 'lb');
                         if (weightPerSide <= 0) return null;
                         return (
-                          <div className="text-xs text-base-content/50">
+                          <div className="text-xs text-base-content/70">
                             <span>{weightPerSide.toFixed(weightPerSide % 1 === 0 ? 0 : 1)}{unit}/side</span>
                             {plates.length > 0 && (
                               <span className="ml-1">({plateText})</span>
@@ -217,8 +217,8 @@ export const WarmupCalculator: React.FC<WarmupCalculatorProps> = ({ exerciseName
                           onClick={(e) => handleRestClick(restGuideline.duration!, e)}
                           className={`text-xs font-medium px-2 py-1 rounded transition-colors mt-1 ${
                             isCompleted
-                              ? 'text-green-400/70 hover:text-green-400 bg-green-900/20'
-                              : 'text-blue-400 hover:text-blue-300 bg-blue-900/20'
+                              ? 'text-success hover:text-success bg-success/15 border border-success/25'
+                              : 'text-info hover:text-info bg-info/15 border border-info/25'
                           }`}
                           title={`Click to start ${restGuideline.duration}s rest timer`}
                         >

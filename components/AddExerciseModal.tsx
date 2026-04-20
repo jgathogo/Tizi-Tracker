@@ -88,7 +88,7 @@ export const AddExerciseModal: React.FC<AddExerciseModalProps> = ({
             <button
               type="submit"
               disabled={!exerciseName.trim()}
-              className="flex-1 px-4 py-3 btn btn-primary disabled:bg-base-300 disabled:text-base-content/50 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 btn btn-primary disabled:bg-base-300 disabled:text-base-content/70 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={18} /> Add Exercise
             </button>
